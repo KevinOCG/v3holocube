@@ -3,6 +3,126 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+/* ── Sound Effects System ── */
+function useSoundEffects() {
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
+
+  const playSpinSound = useCallback(() => {
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+    oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
+    
+    gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.3);
+
+    // Create continuous spinning whoosh
+    const spinInterval = setInterval(() => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150 + Math.random() * 100, ctx.currentTime);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.08);
+    }, 80);
+
+    setTimeout(() => clearInterval(spinInterval), 2800);
+  }, [getAudioContext]);
+
+  const playWinSound = useCallback((isDramatic = false) => {
+    const ctx = getAudioContext();
+    
+    // Triumphant ascending notes
+    const notes = isDramatic ? [523, 659, 784, 1047, 1319] : [523, 659, 784];
+    const duration = isDramatic ? 0.25 : 0.15;
+    
+    notes.forEach((freq, i) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      const startTime = ctx.currentTime + i * duration;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(isDramatic ? 0.25 : 0.15, startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 1.5);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration * 1.5);
+    });
+
+    // Add shimmer for dramatic wins
+    if (isDramatic) {
+      for (let i = 0; i < 8; i++) {
+        const shimmer = ctx.createOscillator();
+        const shimmerGain = ctx.createGain();
+        shimmer.connect(shimmerGain);
+        shimmerGain.connect(ctx.destination);
+        shimmer.type = 'sine';
+        shimmer.frequency.setValueAtTime(2000 + Math.random() * 2000, ctx.currentTime);
+        const startTime = ctx.currentTime + 0.5 + i * 0.1;
+        shimmerGain.gain.setValueAtTime(0.03, startTime);
+        shimmerGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+        shimmer.start(startTime);
+        shimmer.stop(startTime + 0.2);
+      }
+    }
+  }, [getAudioContext]);
+
+  const playLoseSound = useCallback(() => {
+    const ctx = getAudioContext();
+    
+    // Descending disappointed notes
+    const notes = [392, 330, 262];
+    
+    notes.forEach((freq, i) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      const startTime = ctx.currentTime + i * 0.12;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.12, startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + 0.25);
+    });
+  }, [getAudioContext]);
+
+  return { playSpinSound, playWinSound, playLoseSound };
+}
+
 type Character = {
   id: "birb" | "pip" | "toobins" | "zen";
   name: string;
@@ -72,14 +192,17 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
   const currentY = (1 - getBaseGoldMultiplier(currentDay)) * 100;
 
   return (
-    <svg viewBox="-2 -5 104 110" className="h-12 w-full" preserveAspectRatio="none">
+    <svg viewBox="-2 -5 104 110" className="h-12 w-full" preserveAspectRatio="xMidYMid meet">
       <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
       <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
       <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
       <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
-      <circle cx={currentX} cy={currentY} r="3" fill="#f5c842" stroke="#090605" strokeWidth="1.5" />
-      <circle cx={currentX} cy={currentY} r="6" fill="none" stroke="#f5c842" strokeWidth="0.5" opacity="0.5" />
+      {/* Fixed aspect ratio circle - use transform to maintain circular shape */}
+      <g transform={`translate(${currentX}, ${currentY})`}>
+        <circle cx="0" cy="0" r="4" fill="#f5c842" stroke="#090605" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+        <circle cx="0" cy="0" r="7" fill="none" stroke="#f5c842" strokeWidth="0.5" opacity="0.5" vectorEffect="non-scaling-stroke" />
+      </g>
       <defs>
         <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#f5c842" />
@@ -94,65 +217,6 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
   );
 }
 
-/* ── Play Log — fixed height ── */
-function PlayLog({ log, onReset }: { log: LogEntry[]; onReset: () => void }) {
-  if (log.length === 0) return null;
-
-  const wins = log.filter((l) => l.result === "hit").length;
-  const losses = log.length - wins;
-
-  return (
-    <div className="mt-5 rounded-[1.7rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.04),rgba(14,8,6,0.42))] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-white/45">History</div>
-          <div className="flex items-center gap-1.5 text-sm font-bold">
-            <span className="text-[#f5c842]">{wins}W</span>
-            <span className="text-white/20">·</span>
-            <span className="text-white/40">{losses}L</span>
-          </div>
-        </div>
-        <button
-          onClick={onReset}
-          className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-semibold text-white/50 transition hover:border-white/30 hover:text-white/80"
-        >
-          Reset
-        </button>
-      </div>
-      <div className="h-[7.5rem] space-y-1 overflow-y-auto pr-1">
-        {[...log].reverse().map((entry, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex items-center justify-between rounded-xl border px-3 py-1.5 text-xs",
-              entry.result === "hit"
-                ? "border-[#f5c842]/15 bg-[#f5c842]/[0.04]"
-                : "border-white/5 bg-white/[0.02]"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/20">#{log.length - i}</span>
-              <span className="text-white/50">{entry.picks.join(", ")}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-white/30">→ {entry.landed}</span>
-              {entry.result === "hit" ? (
-                <span className="font-bold text-[#f5c842] text-[10px] tracking-wide">
-                  +{entry.goldEarned} Gold
-                </span>
-              ) : (
-                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/25">
-                  MISS
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ── Prism Component ── */
 function HoloPrism({
   landed,
@@ -160,25 +224,74 @@ function HoloPrism({
   rotationDeg,
   isSpinning,
   spinPhase,
+  result,
+  isDramaticWin,
 }: {
   landed: Character["id"];
   selected: Character["id"][];
   rotationDeg: number;
   isSpinning: boolean;
   spinPhase: "idle" | "spinning" | "done";
+  result: "hit" | "miss" | null;
+  isDramaticWin: boolean;
 }) {
   return (
     <div className="relative flex h-[34rem] w-full items-center justify-center overflow-hidden">
       <motion.div
-        className="absolute h-[36rem] w-[36rem] rounded-full bg-[#7c5237]/20 blur-3xl"
-        animate={isSpinning ? { scale: [1, 1.08, 1.02], opacity: [0.55, 0.82, 0.6] } : { scale: 1, opacity: 0.55 }}
-        transition={{ duration: 2.15, ease: [0.12, 0.82, 0.18, 1] }}
+        className={cn(
+          "absolute h-[36rem] w-[36rem] rounded-full blur-3xl",
+          isDramaticWin ? "bg-[#f5c842]/30" : result === "miss" && spinPhase === "done" ? "bg-[#dc2626]/20" : "bg-[#7c5237]/20"
+        )}
+        animate={
+          isDramaticWin 
+            ? { scale: [1, 1.3, 1.1], opacity: [0.6, 1, 0.8] }
+            : isSpinning 
+              ? { scale: [1, 1.08, 1.02], opacity: [0.55, 0.82, 0.6] } 
+              : { scale: 1, opacity: 0.55 }
+        }
+        transition={{ duration: isDramaticWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
       />
       <motion.div
-        className="absolute h-[24rem] w-[24rem] rounded-full bg-[#d39a66]/10 blur-3xl"
-        animate={isSpinning ? { scale: [1, 1.16, 1.02], opacity: [0.3, 0.55, 0.32] } : { scale: 1, opacity: 0.3 }}
-        transition={{ duration: 2.15, ease: [0.12, 0.82, 0.18, 1] }}
+        className={cn(
+          "absolute h-[24rem] w-[24rem] rounded-full blur-3xl",
+          isDramaticWin ? "bg-[#fde68a]/20" : result === "miss" && spinPhase === "done" ? "bg-[#b91c1c]/15" : "bg-[#d39a66]/10"
+        )}
+        animate={
+          isDramaticWin
+            ? { scale: [1, 1.4, 1.15], opacity: [0.4, 0.8, 0.5] }
+            : isSpinning 
+              ? { scale: [1, 1.16, 1.02], opacity: [0.3, 0.55, 0.32] } 
+              : { scale: 1, opacity: 0.3 }
+        }
+        transition={{ duration: isDramaticWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
       />
+      
+      {/* Dramatic win particles */}
+      <AnimatePresence>
+        {isDramaticWin && (
+          <>
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute h-2 w-2 rounded-full bg-[#f5c842]"
+                initial={{ 
+                  x: 0, 
+                  y: 0, 
+                  opacity: 1, 
+                  scale: 1 
+                }}
+                animate={{ 
+                  x: Math.cos((i / 12) * Math.PI * 2) * 200,
+                  y: Math.sin((i / 12) * Math.PI * 2) * 200,
+                  opacity: 0,
+                  scale: 0
+                }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: i * 0.05 }}
+              />
+            ))}
+          </>
+        )}
+      </AnimatePresence>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,242,226,0.12),transparent_16%),radial-gradient(circle_at_50%_86%,rgba(120,74,46,0.15),transparent_24%)]" />
 
       <AnimatePresence>
@@ -298,6 +411,8 @@ export default function Page() {
   const animRef = useRef<number | null>(null);
   const rotRef = useRef(0);
 
+  const { playSpinSound, playWinSound, playLoseSound } = useSoundEffects();
+
   const depositNum = Math.max(0, Number(deposit) || 0);
   const dayMultiplier = getBaseGoldMultiplier(currentDay);
 
@@ -369,6 +484,9 @@ export default function Page() {
     setSpinning(true);
     setSpinPhase("spinning");
     setDepositPhase("spinning");
+    
+    // Play spinning sound
+    playSpinSound();
 
     const fullSpins = 3 + Math.floor(Math.random() * 2);
 
@@ -423,6 +541,14 @@ export default function Page() {
         setSpinPhase("done");
         const isHit = selected.includes(next.id);
         setResult(isHit ? "hit" : "miss");
+        
+        // Play win or lose sound
+        if (isHit) {
+          // Dramatic sound for single pick win (highest risk)
+          playWinSound(selected.length === 1);
+        } else {
+          playLoseSound();
+        }
 
         const goldEarned = isHit
           ? (depositNum * currentGoldRate).toFixed(0)
@@ -446,7 +572,7 @@ export default function Page() {
 
     if (animRef.current) cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(animate);
-  }, [spinning, selected, depositNum, dayMultiplier]);
+  }, [spinning, selected, depositNum, dayMultiplier, playSpinSound, playWinSound, playLoseSound]);
 
   function resetLog() {
     setLog([]);
@@ -455,6 +581,9 @@ export default function Page() {
 
   const hitChance = selected.length === 1 ? "25%" : selected.length === 2 ? "50%" : "75%";
   const goldRate = getGoldRate(selected.length, dayMultiplier);
+  const riskLevel = selected.length === 1 ? "High" : selected.length === 2 ? "Medium" : "Low";
+  const riskColor = selected.length === 1 ? "text-red-400" : selected.length === 2 ? "text-yellow-400" : "text-green-400";
+  const riskBorder = selected.length === 1 ? "border-red-400/20 bg-red-500/5" : selected.length === 2 ? "border-yellow-400/20 bg-yellow-500/5" : "border-green-400/20 bg-green-500/5";
 
   /* ── Button label & style by deposit phase ── */
   const buttonLabel = {
@@ -477,7 +606,6 @@ export default function Page() {
 
       {/* ── Toobins art elements ── */}
       <img src="/toobins-r.png" alt="" className="pointer-events-none fixed right-0 top-0 h-auto w-[28rem] object-contain opacity-20 mix-blend-lighten lg:opacity-30" />
-      <img src="/toobins-l.png" alt="" className="pointer-events-none fixed bottom-0 left-0 h-auto w-[22rem] object-contain opacity-15 mix-blend-lighten lg:opacity-25" />
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-6 md:px-10">
         <header className="flex items-center justify-between gap-4">
@@ -499,7 +627,7 @@ export default function Page() {
           </div>
         </header>
 
-        <section className="grid flex-1 items-center gap-10 py-8 lg:grid-cols-[1.08fr_0.92fr] lg:py-12">
+        <section className="grid flex-1 items-start gap-10 py-8 lg:grid-cols-2 lg:py-12">
           <div className="order-2 lg:order-1">
             <div className="mb-6 max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-red-100/80">
@@ -530,7 +658,7 @@ export default function Page() {
                 )}
               </AnimatePresence>
 
-              {/* Gold glow on landing */}
+              {/* Glow on landing - Gold for hit, Red for miss */}
               <AnimatePresence>
                 {spinPhase === "done" && (
                   <motion.div
@@ -542,7 +670,7 @@ export default function Page() {
                       "pointer-events-none absolute inset-0 rounded-[2.25rem]",
                       result === "hit"
                         ? "bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.2),rgba(212,160,108,0.08)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(245,200,66,0.12)]"
-                        : "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_50%)]"
+                        : "bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.25),rgba(185,28,28,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(220,38,38,0.15)]"
                     )}
                   />
                 )}
@@ -554,6 +682,8 @@ export default function Page() {
                 landed={landed}
                 selected={selected}
                 rotationDeg={rotationDeg}
+                result={result}
+                isDramaticWin={result === "hit" && selected.length === 1 && spinPhase === "done"}
               />
             </div>
           </div>
@@ -626,21 +756,57 @@ export default function Page() {
                       key={character.id}
                       onClick={() => togglePick(character.id)}
                       className={cn(
-                        "group relative overflow-hidden rounded-[1.6rem] border p-3 text-left transition-all duration-200 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
-                        active ? "border-[#edd7bc]/28 bg-[#f0dcc6]/10" : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.03),rgba(18,10,8,0.34))] hover:bg-[#f0dcc6]/[0.06]"
+                        "group relative overflow-hidden rounded-[1.6rem] border p-3 text-left transition-all duration-300 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
+                        active 
+                          ? "border-[#f5c842]/40 bg-[linear-gradient(180deg,rgba(245,200,66,0.12),rgba(212,160,108,0.06))] ring-1 ring-[#f5c842]/20 shadow-[0_0_24px_rgba(245,200,66,0.15)]" 
+                          : "border-[#f0dcc6]/8 bg-[linear-gradient(180deg,rgba(40,30,25,0.5),rgba(18,10,8,0.6))] hover:border-[#f0dcc6]/15 hover:bg-[rgba(40,30,25,0.7)]"
                       )}
                     >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_28%)]" />
+                      <div className={cn(
+                        "absolute inset-0 transition-opacity duration-300",
+                        active 
+                          ? "bg-[radial-gradient(circle_at_top_left,rgba(245,200,66,0.15),transparent_40%)] opacity-100" 
+                          : "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_28%)] opacity-50"
+                      )} />
                       <div className="relative flex items-center gap-3">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] border border-[#f0dcc6]/12 bg-[radial-gradient(circle_at_top,rgba(142,95,61,0.24),rgba(28,17,12,0.34))] p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md">
-                          <CharacterArt src={character.image} alt={character.name} className="h-full w-full rounded-xl object-cover mix-blend-lighten" />
+                        <div className={cn(
+                          "flex h-16 w-16 items-center justify-center rounded-[1.25rem] border p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md transition-all duration-300",
+                          active 
+                            ? "border-[#f5c842]/25 bg-[radial-gradient(circle_at_top,rgba(180,130,70,0.35),rgba(35,22,16,0.25))]" 
+                            : "border-[#f0dcc6]/8 bg-[radial-gradient(circle_at_top,rgba(80,55,40,0.3),rgba(28,17,12,0.5))]"
+                        )}>
+                          <CharacterArt 
+                            src={character.image} 
+                            alt={character.name} 
+                            className={cn(
+                              "h-full w-full rounded-xl object-cover transition-all duration-300",
+                              active 
+                                ? "mix-blend-lighten opacity-100 saturate-100" 
+                                : "mix-blend-luminosity opacity-50 saturate-0 group-hover:opacity-70 group-hover:saturate-50"
+                            )} 
+                          />
                         </div>
                         <div>
-                          <div className="text-base font-bold">{character.name}</div>
-                          <div className="text-xs uppercase tracking-[0.18em] text-white/55">
+                          <div className={cn(
+                            "text-base font-bold transition-colors duration-300",
+                            active ? "text-white" : "text-white/50"
+                          )}>{character.name}</div>
+                          <div className={cn(
+                            "text-xs uppercase tracking-[0.18em] transition-colors duration-300",
+                            active ? "text-[#f5c842]" : "text-white/30"
+                          )}>
                             {active ? "Selected" : "Tap to select"}
                           </div>
                         </div>
+                        {active && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f5c842] text-[#090605]">
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </button>
                   );
@@ -681,10 +847,11 @@ export default function Page() {
               </div>
 
               {/* ── Stats ── */}
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-5 grid gap-3 md:grid-cols-4">
                 {[
                   { label: "Hit Chance", value: hitChance },
                   { label: "Gold Rate", value: goldRate, highlight: true },
+                  { label: "Risk Level", value: riskLevel, isRisk: true },
                   { label: "Deposit", value: `${depositNum || 0} BIRB` },
                 ].map((item) => (
                   <div
@@ -693,13 +860,16 @@ export default function Page() {
                       "rounded-[1.3rem] border p-4 shadow-[0_12px_30px_rgba(0,0,0,0.18)]",
                       "highlight" in item && item.highlight
                         ? "border-[#f5c842]/15 bg-[linear-gradient(180deg,rgba(245,200,66,0.06),rgba(255,244,235,0.02))]"
-                        : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.05),rgba(255,244,235,0.02))]"
+                        : "isRisk" in item && item.isRisk
+                          ? riskBorder
+                          : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.05),rgba(255,244,235,0.02))]"
                     )}
                   >
                     <div className="text-xs uppercase tracking-[0.18em] text-white/45">{item.label}</div>
                     <div className={cn(
                       "mt-2 text-2xl font-black",
-                      "highlight" in item && item.highlight && "text-[#f5c842]"
+                      "highlight" in item && item.highlight && "text-[#f5c842]",
+                      "isRisk" in item && item.isRisk && riskColor
                     )}>
                       {item.value}
                     </div>
@@ -738,51 +908,139 @@ export default function Page() {
                   buttonLabel
                 )}
               </button>
+            </div>
+          </div>
+        </section>
 
-              {/* ── Result with gold glow ── */}
-              <AnimatePresence>
-                {result && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className={cn(
-                      "relative mt-5 overflow-hidden rounded-[1.7rem] border p-5",
-                      result === "hit"
-                        ? "border-[#f5c842]/30 bg-[linear-gradient(180deg,rgba(245,200,66,0.08),rgba(212,160,108,0.04))]"
-                        : "border-white/10 bg-white/5"
-                    )}
+        {/* ── Outcome and History - Horizontal Section ── */}
+        <section className="relative mx-auto w-full max-w-7xl px-0 pb-8">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* ── Outcome Panel ── */}
+            <AnimatePresence mode="wait">
+              {result ? (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className={cn(
+                    "relative overflow-hidden rounded-[2rem] border p-6",
+                    result === "hit"
+                      ? "border-[#f5c842]/30 bg-[linear-gradient(180deg,rgba(245,200,66,0.08),rgba(212,160,108,0.04))]"
+                      : "border-red-500/20 bg-[linear-gradient(180deg,rgba(220,38,38,0.06),rgba(185,28,28,0.02))]"
+                  )}
+                >
+                  {result === "hit" && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 0.6, 0.3] }}
+                      transition={{ duration: 1.5, times: [0, 0.3, 1] }}
+                      className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_50%_0%,rgba(245,200,66,0.2),transparent_60%)]"
+                    />
+                  )}
+                  {result === "miss" && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 0.4, 0.2] }}
+                      transition={{ duration: 1.5, times: [0, 0.3, 1] }}
+                      className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.15),transparent_60%)]"
+                    />
+                  )}
+                  <div className="relative">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
+                    <div className={cn(
+                      "mt-2 text-3xl font-black md:text-4xl",
+                      result === "hit" 
+                        ? "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent"
+                        : "text-red-400"
+                    )}>
+                      {result === "hit" ? "Hit. Gold earned." : "Miss. No Gold this round."}
+                    </div>
+                    <div className="mt-3 text-sm leading-6 text-white/65">
+                      The prism landed on {CHARACTERS.find((c) => c.id === landed)?.name}. {result === "hit" ? "Your pick matched." : "Your pick missed."}
+                      {result === "hit" && (
+                        <span className="ml-1 font-bold text-[#f5c842]">
+                          +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="placeholder"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center justify-center rounded-[2rem] border border-[#f0dcc6]/8 bg-[linear-gradient(180deg,rgba(255,248,240,0.03),rgba(14,8,6,0.42))] p-6"
+                >
+                  <div className="text-center">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
+                    <div className="mt-2 text-lg text-white/20">Spin to see results</div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── History Panel ── */}
+            <div className="rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.04),rgba(14,8,6,0.42))] p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-xs uppercase tracking-[0.18em] text-white/45">History</div>
+                  {log.length > 0 && (
+                    <div className="flex items-center gap-1.5 text-sm font-bold">
+                      <span className="text-[#f5c842]">{log.filter((l) => l.result === "hit").length}W</span>
+                      <span className="text-white/20">·</span>
+                      <span className="text-white/40">{log.filter((l) => l.result === "miss").length}L</span>
+                    </div>
+                  )}
+                </div>
+                {log.length > 0 && (
+                  <button
+                    onClick={resetLog}
+                    className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-semibold text-white/50 transition hover:border-white/30 hover:text-white/80"
                   >
-                    {result === "hit" && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: [0, 0.6, 0.3] }}
-                        transition={{ duration: 1.5, times: [0, 0.3, 1] }}
-                        className="pointer-events-none absolute inset-0 rounded-[1.7rem] bg-[radial-gradient(circle_at_50%_0%,rgba(245,200,66,0.2),transparent_60%)]"
-                      />
-                    )}
-                    <div className="relative">
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
-                      <div className={cn(
-                        "mt-2 text-3xl font-black",
-                        result === "hit" && "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent"
-                      )}>
-                        {result === "hit" ? "Hit. Gold earned." : "Miss. No Gold this round."}
+                    Reset
+                  </button>
+                )}
+              </div>
+              {log.length === 0 ? (
+                <div className="flex h-24 items-center justify-center text-sm text-white/25">
+                  No plays yet
+                </div>
+              ) : (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {[...log].reverse().map((entry, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex-shrink-0 rounded-xl border px-4 py-3 text-xs",
+                        entry.result === "hit"
+                          ? "border-[#f5c842]/20 bg-[#f5c842]/[0.06]"
+                          : "border-red-500/15 bg-red-500/[0.04]"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 text-[10px] text-white/40 mb-1">
+                        <span>#{log.length - i}</span>
+                        <span>{entry.picks.join(", ")}</span>
                       </div>
-                      <div className="mt-3 text-sm leading-6 text-white/65">
-                        The prism landed on {CHARACTERS.find((c) => c.id === landed)?.name}. {result === "hit" ? "Your pick matched." : "Your pick missed."}
-                        {result === "hit" && (
-                          <span className="ml-1 font-bold text-[#f5c842]">
-                            +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/50">{entry.landed}</span>
+                        {entry.result === "hit" ? (
+                          <span className="font-bold text-[#f5c842]">
+                            +{entry.goldEarned}
+                          </span>
+                        ) : (
+                          <span className="font-bold uppercase tracking-wide text-red-400/60">
+                            MISS
                           </span>
                         )}
                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <PlayLog log={log} onReset={resetLog} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
