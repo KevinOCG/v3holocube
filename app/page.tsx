@@ -5,101 +5,34 @@ import { AnimatePresence, motion } from "framer-motion";
 
 /* ── Lofi Music System ── */
 function useLofiMusic() {
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const oscillatorsRef = useRef<OscillatorNode[]>([]);
 
-  const getAudioContext = useCallback(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      gainNodeRef.current = audioContextRef.current.createGain();
-      gainNodeRef.current.connect(audioContextRef.current.destination);
-      gainNodeRef.current.gain.value = 0;
-    }
-    return audioContextRef.current;
+  useEffect(() => {
+    // Create audio element on mount
+    const audio = new Audio('/lofi-track.mp3');
+    audio.loop = true;
+    audio.volume = 0.4;
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
   }, []);
 
-  const playLofiLoop = useCallback(() => {
-    const ctx = getAudioContext();
-    if (!gainNodeRef.current) return;
+  const toggleMute = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    // Lofi chord progression: Cmaj7 -> Am7 -> Fmaj7 -> G7
-    const chords = [
-      [261.63, 329.63, 392.00, 493.88], // Cmaj7
-      [220.00, 261.63, 329.63, 392.00], // Am7
-      [174.61, 220.00, 261.63, 329.63], // Fmaj7
-      [196.00, 246.94, 293.66, 349.23], // G7
-    ];
-
-    let chordIndex = 0;
-
-    const playChord = () => {
-      if (!isPlaying || !gainNodeRef.current) return;
-
-      // Stop previous oscillators
-      oscillatorsRef.current.forEach(osc => {
-        try { osc.stop(); } catch {}
-      });
-      oscillatorsRef.current = [];
-
-      const chord = chords[chordIndex % chords.length];
-      
-      chord.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const noteGain = ctx.createGain();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        
-        noteGain.gain.setValueAtTime(0, ctx.currentTime);
-        noteGain.gain.linearRampToValueAtTime(0.03 - i * 0.005, ctx.currentTime + 0.3);
-        noteGain.gain.linearRampToValueAtTime(0.02 - i * 0.004, ctx.currentTime + 1.5);
-        noteGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-        
-        osc.connect(noteGain);
-        noteGain.connect(gainNodeRef.current!);
-        
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 2);
-        oscillatorsRef.current.push(osc);
-      });
-
-      chordIndex++;
-    };
-
-    playChord();
-    const interval = setInterval(playChord, 2000);
-    return () => clearInterval(interval);
-  }, [getAudioContext, isPlaying]);
-
-  useEffect(() => {
-    if (isPlaying && !isMuted) {
-      const cleanup = playLofiLoop();
-      return cleanup;
-    }
-  }, [isPlaying, isMuted, playLofiLoop]);
-
-  useEffect(() => {
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.linearRampToValueAtTime(
-        isMuted ? 0 : 1,
-        (audioContextRef.current?.currentTime || 0) + 0.1
-      );
+    if (isMuted) {
+      audio.play().catch(() => {});
+      setIsMuted(false);
+    } else {
+      audio.pause();
+      setIsMuted(true);
     }
   }, [isMuted]);
-
-  const toggleMute = useCallback(() => {
-    const ctx = getAudioContext();
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
-    if (!isPlaying) {
-      setIsPlaying(true);
-    }
-    setIsMuted(prev => !prev);
-  }, [getAudioContext, isPlaying]);
 
   return { isMuted, toggleMute };
 }
@@ -346,6 +279,7 @@ function HoloPrism({
   spinPhase,
   result,
   isDramaticWin,
+  isGreenWin,
 }: {
   landed: Character["id"];
   selected: Character["id"][];
@@ -354,36 +288,53 @@ function HoloPrism({
   spinPhase: "idle" | "spinning" | "done";
   result: "hit" | "miss" | null;
   isDramaticWin: boolean;
+  isGreenWin: boolean;
 }) {
   return (
     <div className="relative flex h-[34rem] w-full items-center justify-center overflow-hidden">
       <motion.div
         className={cn(
           "absolute h-[36rem] w-[36rem] rounded-full blur-3xl",
-          isDramaticWin ? "bg-[#f5c842]/30" : result === "miss" && spinPhase === "done" ? "bg-[#dc2626]/20" : "bg-[#7c5237]/20"
+          isDramaticWin 
+            ? "bg-[#f5c842]/30" 
+            : isGreenWin 
+              ? "bg-[#22c55e]/25" 
+              : result === "miss" && spinPhase === "done" 
+                ? "bg-[#dc2626]/20" 
+                : "bg-[#7c5237]/20"
         )}
         animate={
           isDramaticWin 
             ? { scale: [1, 1.3, 1.1], opacity: [0.6, 1, 0.8] }
-            : isSpinning 
-              ? { scale: [1, 1.08, 1.02], opacity: [0.55, 0.82, 0.6] } 
-              : { scale: 1, opacity: 0.55 }
+            : isGreenWin
+              ? { scale: [1, 1.15, 1.05], opacity: [0.5, 0.85, 0.65] }
+              : isSpinning 
+                ? { scale: [1, 1.08, 1.02], opacity: [0.55, 0.82, 0.6] } 
+                : { scale: 1, opacity: 0.55 }
         }
-        transition={{ duration: isDramaticWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={{ duration: isDramaticWin || isGreenWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
       />
       <motion.div
         className={cn(
           "absolute h-[24rem] w-[24rem] rounded-full blur-3xl",
-          isDramaticWin ? "bg-[#fde68a]/20" : result === "miss" && spinPhase === "done" ? "bg-[#b91c1c]/15" : "bg-[#d39a66]/10"
+          isDramaticWin 
+            ? "bg-[#fde68a]/20" 
+            : isGreenWin 
+              ? "bg-[#86efac]/15" 
+              : result === "miss" && spinPhase === "done" 
+                ? "bg-[#b91c1c]/15" 
+                : "bg-[#d39a66]/10"
         )}
         animate={
           isDramaticWin
             ? { scale: [1, 1.4, 1.15], opacity: [0.4, 0.8, 0.5] }
-            : isSpinning 
-              ? { scale: [1, 1.16, 1.02], opacity: [0.3, 0.55, 0.32] } 
-              : { scale: 1, opacity: 0.3 }
+            : isGreenWin
+              ? { scale: [1, 1.25, 1.1], opacity: [0.35, 0.65, 0.45] }
+              : isSpinning 
+                ? { scale: [1, 1.16, 1.02], opacity: [0.3, 0.55, 0.32] } 
+                : { scale: 1, opacity: 0.3 }
         }
-        transition={{ duration: isDramaticWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={{ duration: isDramaticWin || isGreenWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
       />
       
       {/* Dramatic win particles */}
@@ -795,7 +746,7 @@ export default function Page() {
                 )}
               </AnimatePresence>
 
-              {/* Glow on landing - Gold for hit, Red for miss */}
+              {/* Glow on landing - Gold for high risk win, Green for medium/low risk win, Red for miss */}
               <AnimatePresence>
                 {spinPhase === "done" && (
                   <motion.div
@@ -805,9 +756,11 @@ export default function Page() {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className={cn(
                       "pointer-events-none absolute inset-0 rounded-[2.25rem]",
-                      result === "hit"
-                        ? "bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.2),rgba(212,160,108,0.08)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(245,200,66,0.12)]"
-                        : "bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.25),rgba(185,28,28,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(220,38,38,0.15)]"
+                      result === "hit" && selected.length === 1
+                        ? "bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.25),rgba(212,160,108,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(245,200,66,0.15)]"
+                        : result === "hit"
+                          ? "bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.25),rgba(22,163,74,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(34,197,94,0.15)]"
+                          : "bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.25),rgba(185,28,28,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(220,38,38,0.15)]"
                     )}
                   />
                 )}
@@ -821,6 +774,7 @@ export default function Page() {
                 rotationDeg={rotationDeg}
                 result={result}
                 isDramaticWin={result === "hit" && selected.length === 1 && spinPhase === "done"}
+                isGreenWin={result === "hit" && selected.length > 1 && spinPhase === "done"}
               />
             </div>
           </div>

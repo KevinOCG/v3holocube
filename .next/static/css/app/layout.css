@@ -1033,6 +1033,12 @@ video {
 .bg-yellow-500\/5 {
   background-color: rgb(234 179 8 / 0.05);
 }
+.bg-\[\#22c55e\]\/25 {
+  background-color: rgb(34 197 94 / 0.25);
+}
+.bg-\[\#86efac\]\/15 {
+  background-color: rgb(134 239 172 / 0.15);
+}
 .bg-\[linear-gradient\(135deg\2c \#b8432f\2c \#d44a35\)\] {
   background-image: linear-gradient(135deg,#b8432f,#d44a35);
 }
@@ -1137,6 +1143,12 @@ video {
 }
 .bg-gradient-to-r {
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+.bg-\[radial-gradient\(circle_at_center\2c rgba\(245\2c 200\2c 66\2c 0\.25\)\2c rgba\(212\2c 160\2c 108\2c 0\.1\)_40\%\2c transparent_70\%\)\] {
+  background-image: radial-gradient(circle at center,rgba(245,200,66,0.25),rgba(212,160,108,0.1) 40%,transparent 70%);
+}
+.bg-\[radial-gradient\(circle_at_center\2c rgba\(34\2c 197\2c 94\2c 0\.25\)\2c rgba\(22\2c 163\2c 74\2c 0\.1\)_40\%\2c transparent_70\%\)\] {
+  background-image: radial-gradient(circle at center,rgba(34,197,94,0.25),rgba(22,163,74,0.1) 40%,transparent 70%);
 }
 .from-\[\#140e0c\] {
   --tw-gradient-from: #140e0c var(--tw-gradient-from-position);
@@ -1575,6 +1587,16 @@ video {
 .shadow-\[inset_0_1px_0_rgba\(255\2c 255\2c 255\2c 0\.06\)\2c 0_30px_90px_rgba\(0\2c 0\2c 0\2c 0\.32\)\] {
   --tw-shadow: inset 0 1px 0 rgba(255,255,255,0.06),0 30px 90px rgba(0,0,0,0.32);
   --tw-shadow-colored: inset 0 1px 0 var(--tw-shadow-color), 0 30px 90px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[inset_0_0_80px_rgba\(245\2c 200\2c 66\2c 0\.15\)\] {
+  --tw-shadow: inset 0 0 80px rgba(245,200,66,0.15);
+  --tw-shadow-colored: inset 0 0 80px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[inset_0_0_80px_rgba\(34\2c 197\2c 94\2c 0\.15\)\] {
+  --tw-shadow: inset 0 0 80px rgba(34,197,94,0.15);
+  --tw-shadow-colored: inset 0 0 80px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 .outline-none {
