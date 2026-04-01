@@ -3,6 +3,183 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+/* ── Lofi Music System ── */
+function useLofiMusic() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMuted, setIsMuted] = useState(false); // Start unmuted for autoplay
+  const [volume, setVolume] = useState(0.06); // Lower default volume
+
+  useEffect(() => {
+    // Create audio element on mount
+    const audio = new Audio('/lofi-track.mp3');
+    audio.loop = true;
+    audio.volume = volume;
+    audioRef.current = audio;
+
+    // Attempt autoplay
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Autoplay was prevented, user needs to interact first
+        setIsMuted(true);
+      });
+    }
+
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  const toggleMute = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isMuted) {
+      audio.play().catch(() => {});
+      setIsMuted(false);
+    } else {
+      audio.pause();
+      setIsMuted(true);
+    }
+  }, [isMuted]);
+
+  const handleVolumeChange = useCallback((newVolume: number) => {
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  }, []);
+
+  return { isMuted, toggleMute, volume, handleVolumeChange };
+}
+
+/* ── Sound Effects System ── */
+function useSoundEffects() {
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
+
+  const playSpinSound = useCallback(() => {
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+    oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
+    
+    gainNode.gain.setValueAtTime(0.35, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.02, ctx.currentTime + 0.3);
+    
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.3);
+
+    // Create continuous spinning whoosh
+    const spinInterval = setInterval(() => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150 + Math.random() * 100, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.02, ctx.currentTime + 0.08);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.08);
+    }, 80);
+
+    setTimeout(() => clearInterval(spinInterval), 2800);
+  }, [getAudioContext]);
+
+  const playWinSound = useCallback((isDramatic = false) => {
+    const ctx = getAudioContext();
+    
+    // Triumphant ascending notes
+    const notes = isDramatic ? [523, 659, 784, 1047, 1319] : [523, 659, 784];
+    const duration = isDramatic ? 0.25 : 0.15;
+    
+    notes.forEach((freq, i) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      const startTime = ctx.currentTime + i * duration;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(isDramatic ? 0.5 : 0.35, startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.02, startTime + duration * 1.5);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration * 1.5);
+    });
+
+    // Add shimmer for dramatic wins
+    if (isDramatic) {
+      for (let i = 0; i < 8; i++) {
+        const shimmer = ctx.createOscillator();
+        const shimmerGain = ctx.createGain();
+        shimmer.connect(shimmerGain);
+        shimmerGain.connect(ctx.destination);
+        shimmer.type = 'sine';
+        shimmer.frequency.setValueAtTime(2000 + Math.random() * 2000, ctx.currentTime);
+        const startTime = ctx.currentTime + 0.5 + i * 0.1;
+        shimmerGain.gain.setValueAtTime(0.08, startTime);
+        shimmerGain.gain.exponentialRampToValueAtTime(0.002, startTime + 0.2);
+        shimmer.start(startTime);
+        shimmer.stop(startTime + 0.2);
+      }
+    }
+  }, [getAudioContext]);
+
+  const playLoseSound = useCallback(() => {
+    const ctx = getAudioContext();
+    
+    // Descending disappointed notes
+    const notes = [392, 330, 262];
+    
+    notes.forEach((freq, i) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      const startTime = ctx.currentTime + i * 0.12;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.02, startTime + 0.2);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + 0.25);
+    });
+  }, [getAudioContext]);
+
+  return { playSpinSound, playWinSound, playLoseSound };
+}
+
 type Character = {
   id: "birb" | "pip" | "toobins" | "zen";
   name: string;
@@ -58,6 +235,9 @@ type DepositPhase = "deposit" | "receiving" | "ready" | "spinning";
 
 /* ── Day Decay Curve Visualization ── */
 function DayDecayCurve({ currentDay }: { currentDay: number }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [circlePos, setCirclePos] = useState({ x: 0, y: 0 });
+
   const points = useMemo(() => {
     const pts: string[] = [];
     for (let d = 1; d <= 28; d++) {
@@ -71,83 +251,43 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
   const currentX = ((currentDay - 1) / 27) * 100;
   const currentY = (1 - getBaseGoldMultiplier(currentDay)) * 100;
 
-  return (
-    <svg viewBox="-2 -5 104 110" className="h-12 w-full" preserveAspectRatio="none">
-      <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
-      <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
-      <circle cx={currentX} cy={currentY} r="3" fill="#f5c842" stroke="#090605" strokeWidth="1.5" />
-      <circle cx={currentX} cy={currentY} r="6" fill="none" stroke="#f5c842" strokeWidth="0.5" opacity="0.5" />
-      <defs>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#f5c842" />
-          <stop offset="100%" stopColor="#d4a06c" />
-        </linearGradient>
-        <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="rgba(245,200,66,0.12)" />
-          <stop offset="100%" stopColor="rgba(245,200,66,0)" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-/* ── Play Log — fixed height ── */
-function PlayLog({ log, onReset }: { log: LogEntry[]; onReset: () => void }) {
-  if (log.length === 0) return null;
-
-  const wins = log.filter((l) => l.result === "hit").length;
-  const losses = log.length - wins;
+  // Calculate actual pixel position for the circle overlay
+  useEffect(() => {
+    if (svgRef.current) {
+      const svg = svgRef.current;
+      const rect = svg.getBoundingClientRect();
+      // Map viewBox coordinates to actual pixels
+      const pixelX = (currentX / 100) * rect.width;
+      const pixelY = ((currentY + 5) / 110) * rect.height; // Account for viewBox offset
+      setCirclePos({ x: pixelX, y: pixelY });
+    }
+  }, [currentDay, currentX, currentY]);
 
   return (
-    <div className="mt-5 rounded-[1.7rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.04),rgba(14,8,6,0.42))] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-white/45">History</div>
-          <div className="flex items-center gap-1.5 text-sm font-bold">
-            <span className="text-[#f5c842]">{wins}W</span>
-            <span className="text-white/20">·</span>
-            <span className="text-white/40">{losses}L</span>
-          </div>
-        </div>
-        <button
-          onClick={onReset}
-          className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-semibold text-white/50 transition hover:border-white/30 hover:text-white/80"
-        >
-          Reset
-        </button>
-      </div>
-      <div className="h-[7.5rem] space-y-1 overflow-y-auto pr-1">
-        {[...log].reverse().map((entry, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex items-center justify-between rounded-xl border px-3 py-1.5 text-xs",
-              entry.result === "hit"
-                ? "border-[#f5c842]/15 bg-[#f5c842]/[0.04]"
-                : "border-white/5 bg-white/[0.02]"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/20">#{log.length - i}</span>
-              <span className="text-white/50">{entry.picks.join(", ")}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-white/30">→ {entry.landed}</span>
-              {entry.result === "hit" ? (
-                <span className="font-bold text-[#f5c842] text-[10px] tracking-wide">
-                  +{entry.goldEarned} Gold
-                </span>
-              ) : (
-                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/25">
-                  MISS
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
+    <div className="relative h-12 w-full">
+      <svg ref={svgRef} viewBox="-2 -5 104 110" className="h-full w-full" preserveAspectRatio="none">
+        <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
+        <defs>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#d12429" />
+            <stop offset="100%" stopColor="#ecd9ba" />
+          </linearGradient>
+          <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(209,36,41,0.12)" />
+            <stop offset="100%" stopColor="rgba(209,36,41,0)" />
+          </linearGradient>
+        </defs>
+      </svg>
+      {/* Circle indicator rendered as DOM element to maintain aspect ratio */}
+      <div 
+        className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#d12429] shadow-[0_0_8px_rgba(209,36,41,0.6)]"
+        style={{ left: circlePos.x, top: circlePos.y }}
+      >
+        <div className="absolute inset-[-4px] rounded-full border border-[#d12429]/40" />
       </div>
     </div>
   );
@@ -160,25 +300,92 @@ function HoloPrism({
   rotationDeg,
   isSpinning,
   spinPhase,
+  result,
+  isDramaticWin,
+  isGreenWin,
 }: {
   landed: Character["id"];
   selected: Character["id"][];
   rotationDeg: number;
   isSpinning: boolean;
   spinPhase: "idle" | "spinning" | "done";
+  result: "hit" | "miss" | null;
+  isDramaticWin: boolean;
+  isGreenWin: boolean;
 }) {
   return (
     <div className="relative flex h-[34rem] w-full items-center justify-center overflow-hidden">
       <motion.div
-        className="absolute h-[36rem] w-[36rem] rounded-full bg-[#7c5237]/20 blur-3xl"
-        animate={isSpinning ? { scale: [1, 1.08, 1.02], opacity: [0.55, 0.82, 0.6] } : { scale: 1, opacity: 0.55 }}
-        transition={{ duration: 2.15, ease: [0.12, 0.82, 0.18, 1] }}
+        className={cn(
+          "absolute h-[36rem] w-[36rem] rounded-full blur-3xl",
+          isDramaticWin 
+            ? "bg-[#ffd700]/45" 
+            : isGreenWin 
+              ? "bg-[#22c55e]/25" 
+              : result === "miss" && spinPhase === "done" 
+                ? "bg-[#dc2626]/20" 
+                : "bg-[#7c5237]/20"
+        )}
+        animate={
+          isDramaticWin 
+            ? { scale: [1, 1.3, 1.1], opacity: [0.6, 1, 0.8] }
+            : isGreenWin
+              ? { scale: [1, 1.15, 1.05], opacity: [0.5, 0.85, 0.65] }
+              : isSpinning 
+                ? { scale: [1, 1.08, 1.02], opacity: [0.55, 0.82, 0.6] } 
+                : { scale: 1, opacity: 0.55 }
+        }
+        transition={{ duration: isDramaticWin || isGreenWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
       />
       <motion.div
-        className="absolute h-[24rem] w-[24rem] rounded-full bg-[#d39a66]/10 blur-3xl"
-        animate={isSpinning ? { scale: [1, 1.16, 1.02], opacity: [0.3, 0.55, 0.32] } : { scale: 1, opacity: 0.3 }}
-        transition={{ duration: 2.15, ease: [0.12, 0.82, 0.18, 1] }}
+        className={cn(
+          "absolute h-[24rem] w-[24rem] rounded-full blur-3xl",
+          isDramaticWin 
+            ? "bg-[#ffec8b]/35" 
+            : isGreenWin 
+              ? "bg-[#86efac]/15" 
+              : result === "miss" && spinPhase === "done" 
+                ? "bg-[#b91c1c]/15" 
+                : "bg-[#d39a66]/10"
+        )}
+        animate={
+          isDramaticWin
+            ? { scale: [1, 1.4, 1.15], opacity: [0.4, 0.8, 0.5] }
+            : isGreenWin
+              ? { scale: [1, 1.25, 1.1], opacity: [0.35, 0.65, 0.45] }
+              : isSpinning 
+                ? { scale: [1, 1.16, 1.02], opacity: [0.3, 0.55, 0.32] } 
+                : { scale: 1, opacity: 0.3 }
+        }
+        transition={{ duration: isDramaticWin || isGreenWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
       />
+      
+      {/* Dramatic win particles */}
+      <AnimatePresence>
+        {isDramaticWin && (
+          <>
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute h-2 w-2 rounded-full bg-[#ffd700]"
+                initial={{ 
+                  x: 0, 
+                  y: 0, 
+                  opacity: 1, 
+                  scale: 1 
+                }}
+                animate={{ 
+                  x: Math.cos((i / 12) * Math.PI * 2) * 200,
+                  y: Math.sin((i / 12) * Math.PI * 2) * 200,
+                  opacity: 0,
+                  scale: 0
+                }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: i * 0.05 }}
+              />
+            ))}
+          </>
+        )}
+      </AnimatePresence>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,242,226,0.12),transparent_16%),radial-gradient(circle_at_50%_86%,rgba(120,74,46,0.15),transparent_24%)]" />
 
       <AnimatePresence>
@@ -254,7 +461,7 @@ function HoloPrism({
                     <div className="mb-5 flex h-[11rem] w-[11rem] items-center justify-center rounded-[1.85rem] border border-[#f1dcc6]/12 bg-[radial-gradient(circle_at_top,rgba(160,110,72,0.28),rgba(35,22,16,0.18))] p-3 shadow-[inset_0_1px_0_rgba(255,245,234,0.08)] backdrop-blur-xl">
                       <CharacterArt src={face.image} alt={face.name} className="h-full w-full rounded-[1.15rem] object-cover mix-blend-lighten drop-shadow-[0_18px_35px_rgba(0,0,0,0.42)]" />
                     </div>
-                    <div className="rounded-full border border-[#f1dfc9]/12 bg-[linear-gradient(180deg,rgba(38,23,16,0.5),rgba(20,12,8,0.62))] px-5 py-2 text-xl font-black tracking-tight text-[#fff8ef] shadow-[inset_0_1px_0_rgba(255,245,234,0.08)]">
+                    <div className="rounded-full border border-[#f1dfc9]/12 bg-[linear-gradient(180deg,rgba(38,23,16,0.5),rgba(20,12,8,0.62))] px-5 py-2 font-heading text-xl font-black tracking-tight text-[#fff8ef] shadow-[inset_0_1px_0_rgba(255,245,234,0.08)]">
                       {face.name}
                     </div>
                   </div>
@@ -297,6 +504,9 @@ export default function Page() {
 
   const animRef = useRef<number | null>(null);
   const rotRef = useRef(0);
+
+  const { playSpinSound, playWinSound, playLoseSound } = useSoundEffects();
+  const { isMuted, toggleMute, volume, handleVolumeChange } = useLofiMusic();
 
   const depositNum = Math.max(0, Number(deposit) || 0);
   const dayMultiplier = getBaseGoldMultiplier(currentDay);
@@ -369,6 +579,9 @@ export default function Page() {
     setSpinning(true);
     setSpinPhase("spinning");
     setDepositPhase("spinning");
+    
+    // Play spinning sound
+    playSpinSound();
 
     const fullSpins = 3 + Math.floor(Math.random() * 2);
 
@@ -423,6 +636,14 @@ export default function Page() {
         setSpinPhase("done");
         const isHit = selected.includes(next.id);
         setResult(isHit ? "hit" : "miss");
+        
+        // Play win or lose sound
+        if (isHit) {
+          // Dramatic sound for single pick win (highest risk)
+          playWinSound(selected.length === 1);
+        } else {
+          playLoseSound();
+        }
 
         const goldEarned = isHit
           ? (depositNum * currentGoldRate).toFixed(0)
@@ -446,7 +667,7 @@ export default function Page() {
 
     if (animRef.current) cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(animate);
-  }, [spinning, selected, depositNum, dayMultiplier]);
+  }, [spinning, selected, depositNum, dayMultiplier, playSpinSound, playWinSound, playLoseSound]);
 
   function resetLog() {
     setLog([]);
@@ -455,6 +676,9 @@ export default function Page() {
 
   const hitChance = selected.length === 1 ? "25%" : selected.length === 2 ? "50%" : "75%";
   const goldRate = getGoldRate(selected.length, dayMultiplier);
+  const riskLevel = selected.length === 1 ? "High" : selected.length === 2 ? "Medium" : "Low";
+  const riskColor = selected.length === 1 ? "text-red-400" : selected.length === 2 ? "text-yellow-400" : "text-green-400";
+  const riskBorder = selected.length === 1 ? "border-red-400/20 bg-red-500/5" : selected.length === 2 ? "border-yellow-400/20 bg-yellow-500/5" : "border-green-400/20 bg-green-500/5";
 
   /* ── Button label & style by deposit phase ── */
   const buttonLabel = {
@@ -477,37 +701,76 @@ export default function Page() {
 
       {/* ── Toobins art elements ── */}
       <img src="/toobins-r.png" alt="" className="pointer-events-none fixed right-0 top-0 h-auto w-[28rem] object-contain opacity-20 mix-blend-lighten lg:opacity-30" />
-      <img src="/toobins-l.png" alt="" className="pointer-events-none fixed bottom-0 left-0 h-auto w-[22rem] object-contain opacity-15 mix-blend-lighten lg:opacity-25" />
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-6 md:px-10">
         <header className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-md">
-              <img src="/logo.png" alt="birb" className="h-7 w-auto object-contain md:h-9" />
-            </div>
-            <div className="inline-flex rounded-full border border-[#f0dcc6]/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/70 backdrop-blur-md">
-              Cube Concept
+          <div className="flex items-center gap-4">
+            <img src="/logo.png" alt="birb" className="h-8 w-auto object-contain md:h-10" />
+            <div className="text-xs uppercase tracking-[0.2em] text-white/50">
+              Prism Concept
             </div>
           </div>
           <div className="hidden items-center gap-3 md:flex">
-            <div className="rounded-full border border-[#d4a06c]/30 bg-[#d4a06c]/10 px-4 py-2 text-sm text-[#f0dcc6] backdrop-blur-md">
+            {/* Music Controls */}
+            <div className="flex items-center gap-2 rounded-full border border-[#ecd9ba]/15 bg-black/20 px-3 py-2 backdrop-blur-md">
+              <button
+                onClick={toggleMute}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full transition",
+                  isMuted ? "text-[#ecd9ba]/40 hover:text-[#ecd9ba]/70" : "text-[#ecd9ba] hover:text-white"
+                )}
+                title={isMuted ? "Play music" : "Mute music"}
+              >
+                {isMuted ? (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                  </svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                  </svg>
+                )}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="0.3"
+                step="0.005"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => {
+                  const newVol = parseFloat(e.target.value);
+                  handleVolumeChange(newVol);
+                  if (newVol > 0 && isMuted) {
+                    toggleMute();
+                  }
+                }}
+                className={cn(
+                  "h-1 w-16 cursor-pointer appearance-none rounded-full bg-[#ecd9ba]/20 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full",
+                  isMuted 
+                    ? "[&::-webkit-slider-thumb]:bg-[#ecd9ba]/40" 
+                    : "[&::-webkit-slider-thumb]:bg-[#d12429]"
+                )}
+                title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+              />
+            </div>
+            <div className="rounded-full border border-[#ecd9ba]/30 bg-[#ecd9ba]/10 px-4 py-2 text-sm text-[#ecd9ba] backdrop-blur-md">
               SOL: F8ow...Pepn
             </div>
-            <button className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">
+            <button className="rounded-full bg-[#d12429] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7d050d]">
               Disconnect
             </button>
           </div>
         </header>
 
-        <section className="grid flex-1 items-center gap-10 py-8 lg:grid-cols-[1.08fr_0.92fr] lg:py-12">
-          <div className="order-2 lg:order-1">
+        <section className="grid flex-1 gap-10 py-8 lg:grid-cols-2 lg:py-12">
+          <div className="order-2 flex flex-col lg:order-1">
             <div className="mb-6 max-w-2xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-red-100/80">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#d12429]/30 bg-[#d12429]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ecd9ba]/80">
                 Premium playtest concept
               </div>
-              <h1 className="text-4xl font-black leading-[0.95] tracking-tight md:text-6xl">
+              <h1 className="font-heading text-4xl font-black leading-[0.95] tracking-tight md:text-6xl">
                 Predict the landing.
-                <span className="block bg-gradient-to-r from-white via-[#f8e7d4] to-[#d4a06c] bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-white via-[#ecd9ba] to-[#d12429] bg-clip-text text-transparent">
                   Keep your BIRB.
                 </span>
               </h1>
@@ -517,7 +780,7 @@ export default function Page() {
             </div>
 
             {/* ── Prism Container ── */}
-            <div className="relative flex min-h-[30rem] items-center justify-center rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_30px_90px_rgba(0,0,0,0.32)] backdrop-blur-xl">
+            <div className="relative flex flex-1 items-center justify-center rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_30px_90px_rgba(0,0,0,0.32)] backdrop-blur-xl">
               <AnimatePresence>
                 {flash && (
                   <motion.div
@@ -530,7 +793,7 @@ export default function Page() {
                 )}
               </AnimatePresence>
 
-              {/* Gold glow on landing */}
+              {/* Glow on landing - Cream for high risk win, Green for medium/low risk win, Red for miss */}
               <AnimatePresence>
                 {spinPhase === "done" && (
                   <motion.div
@@ -540,9 +803,11 @@ export default function Page() {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className={cn(
                       "pointer-events-none absolute inset-0 rounded-[2.25rem]",
-                      result === "hit"
-                        ? "bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.2),rgba(212,160,108,0.08)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(245,200,66,0.12)]"
-                        : "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_50%)]"
+                      result === "hit" && selected.length === 1
+                        ? "bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.4),rgba(255,236,139,0.18)_40%,transparent_70%)] shadow-[inset_0_0_100px_rgba(255,215,0,0.25)]"
+                        : result === "hit"
+                          ? "bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.25),rgba(22,163,74,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(34,197,94,0.15)]"
+                          : "bg-[radial-gradient(circle_at_center,rgba(209,36,41,0.25),rgba(125,5,13,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(209,36,41,0.15)]"
                     )}
                   />
                 )}
@@ -554,16 +819,19 @@ export default function Page() {
                 landed={landed}
                 selected={selected}
                 rotationDeg={rotationDeg}
+                result={result}
+                isDramaticWin={result === "hit" && selected.length === 1 && spinPhase === "done"}
+                isGreenWin={result === "hit" && selected.length > 1 && spinPhase === "done"}
               />
             </div>
           </div>
 
-          <div className="order-1 lg:order-2">
-            <div className="rounded-[2.2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.06),rgba(255,244,235,0.025))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
+          <div className="order-1 flex flex-col lg:order-2">
+            <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.06),rgba(236,217,186,0.02))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Entry Flow</div>
-                  <div className="mt-1 text-2xl font-black tracking-tight">Simple. Guided. Fast.</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Entry Flow</div>
+                  <div className="mt-1 font-heading text-2xl font-black tracking-tight">Simple. Guided. Fast.</div>
                 </div>
                 <div className="text-right text-sm text-white/50">Playtest</div>
               </div>
@@ -572,8 +840,8 @@ export default function Page() {
               <div className={cn(
                 "rounded-[1.6rem] border p-4 shadow-[inset_0_1px_0_rgba(255,245,234,0.04)] transition-colors duration-500",
                 depositPhase === "ready"
-                  ? "border-[#f5c842]/20 bg-[linear-gradient(180deg,rgba(245,200,66,0.06),rgba(14,8,6,0.42))]"
-                  : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.04),rgba(14,8,6,0.42))]"
+                  ? "border-[#d12429]/20 bg-[linear-gradient(180deg,rgba(209,36,41,0.06),rgba(14,8,6,0.42))]"
+                  : "border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.04),rgba(14,8,6,0.42))]"
               )}>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-xs uppercase tracking-[0.18em] text-white/45">Deposit Amount</label>
@@ -595,9 +863,9 @@ export default function Page() {
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#f5c842]"
+                      className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#d12429]"
                     >
-                      ✓ Deposited
+                      Deposited
                     </motion.div>
                   )}
                 </div>
@@ -626,21 +894,57 @@ export default function Page() {
                       key={character.id}
                       onClick={() => togglePick(character.id)}
                       className={cn(
-                        "group relative overflow-hidden rounded-[1.6rem] border p-3 text-left transition-all duration-200 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
-                        active ? "border-[#edd7bc]/28 bg-[#f0dcc6]/10" : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.03),rgba(18,10,8,0.34))] hover:bg-[#f0dcc6]/[0.06]"
+                        "group relative overflow-hidden rounded-[1.6rem] border p-3 text-left transition-all duration-300 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
+                        active 
+                          ? "border-[#c9a86c]/35 bg-[linear-gradient(180deg,rgba(201,168,108,0.1),rgba(160,130,80,0.05))] ring-1 ring-[#c9a86c]/15 shadow-[0_0_20px_rgba(201,168,108,0.1)]" 
+                          : "border-[#f0dcc6]/8 bg-[linear-gradient(180deg,rgba(40,30,25,0.5),rgba(18,10,8,0.6))] hover:border-[#f0dcc6]/15 hover:bg-[rgba(40,30,25,0.7)]"
                       )}
                     >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_28%)]" />
+                      <div className={cn(
+                        "absolute inset-0 transition-opacity duration-300",
+                        active 
+                          ? "bg-[radial-gradient(circle_at_top_left,rgba(201,168,108,0.12),transparent_40%)] opacity-100" 
+                          : "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_28%)] opacity-50"
+                      )} />
                       <div className="relative flex items-center gap-3">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] border border-[#f0dcc6]/12 bg-[radial-gradient(circle_at_top,rgba(142,95,61,0.24),rgba(28,17,12,0.34))] p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md">
-                          <CharacterArt src={character.image} alt={character.name} className="h-full w-full rounded-xl object-cover mix-blend-lighten" />
+                        <div className={cn(
+                          "flex h-16 w-16 items-center justify-center rounded-[1.25rem] border p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md transition-all duration-300",
+                          active 
+                            ? "border-[#c9a86c]/20 bg-[radial-gradient(circle_at_top,rgba(180,145,85,0.18),rgba(35,22,16,0.25))]" 
+                            : "border-[#f0dcc6]/8 bg-[radial-gradient(circle_at_top,rgba(80,55,40,0.3),rgba(28,17,12,0.5))]"
+                        )}>
+                          <CharacterArt 
+                            src={character.image} 
+                            alt={character.name} 
+                            className={cn(
+                              "h-full w-full rounded-xl object-cover transition-all duration-300",
+                              active 
+                                ? "mix-blend-lighten opacity-100 saturate-100" 
+                                : "mix-blend-luminosity opacity-50 saturate-0 group-hover:opacity-70 group-hover:saturate-50"
+                            )} 
+                          />
                         </div>
                         <div>
-                          <div className="text-base font-bold">{character.name}</div>
-                          <div className="text-xs uppercase tracking-[0.18em] text-white/55">
+                          <div className={cn(
+                            "text-base font-bold transition-colors duration-300",
+                            active ? "text-white" : "text-white/50"
+                          )}>{character.name}</div>
+                          <div className={cn(
+                            "text-xs uppercase tracking-[0.18em] transition-colors duration-300",
+                            active ? "text-[#c9a86c]" : "text-white/30"
+                          )}>
                             {active ? "Selected" : "Tap to select"}
                           </div>
                         </div>
+                        {active && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#c9a86c] text-[#1a1510]">
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </button>
                   );
@@ -648,12 +952,12 @@ export default function Page() {
               </div>
 
               {/* ── Day Decay Slider ── */}
-              <div className="mt-5 rounded-[1.6rem] border border-[#f5c842]/15 bg-[linear-gradient(180deg,rgba(245,200,66,0.04),rgba(14,8,6,0.42))] p-4 shadow-[inset_0_1px_0_rgba(245,200,66,0.06)]">
+              <div className="mt-5 rounded-[1.6rem] border border-[#d12429]/15 bg-[linear-gradient(180deg,rgba(209,36,41,0.04),rgba(14,8,6,0.42))] p-4 shadow-[inset_0_1px_0_rgba(209,36,41,0.06)]">
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-xs uppercase tracking-[0.18em] text-white/45">Gold Rate Decay</label>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-white/35">Day</span>
-                    <span className="text-lg font-black text-[#f5c842]">{currentDay}</span>
+                    <span className="font-heading text-lg font-black text-[#d12429]">{currentDay}</span>
                     <span className="text-xs text-white/35">/ 28</span>
                   </div>
                 </div>
@@ -666,13 +970,13 @@ export default function Page() {
                     max={28}
                     value={currentDay}
                     onChange={(e) => setCurrentDay(Number(e.target.value))}
-                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/10 accent-[#f5c842] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#f5c842] [&::-webkit-slider-thumb]:shadow-[0_0_12px_rgba(245,200,66,0.4)]"
+                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/10 accent-[#d12429] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429] [&::-webkit-slider-thumb]:shadow-[0_0_12px_rgba(209,36,41,0.4)]"
                   />
                   <span className="text-[10px] uppercase tracking-[0.15em] text-white/30">28</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs">
                   <div className="text-white/40">
-                    Boost: <span className="font-bold text-[#f5c842]">{(dayMultiplier * 100).toFixed(0)}%</span>
+                    Boost: <span className="font-bold text-[#d12429]">{(dayMultiplier * 100).toFixed(0)}%</span>
                   </div>
                   <div className="text-white/30">
                     {currentDay === 1 ? "Peak early-bird bonus" : currentDay <= 7 ? "Strong early bonus" : currentDay <= 14 ? "Bonus decaying" : currentDay <= 21 ? "Moderate bonus" : "Floor rate — still rewarding"}
@@ -681,25 +985,29 @@ export default function Page() {
               </div>
 
               {/* ── Stats ── */}
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-5 grid grid-cols-4 gap-2">
                 {[
-                  { label: "Hit Chance", value: hitChance },
-                  { label: "Gold Rate", value: goldRate, highlight: true },
-                  { label: "Deposit", value: `${depositNum || 0} BIRB` },
+                  { label: "Hit", value: hitChance },
+                  { label: "Rate", value: goldRate, highlight: true },
+                  { label: "Risk", value: riskLevel, isRisk: true },
+                  { label: "Amt", value: `${depositNum || 0}` },
                 ].map((item) => (
                   <div
                     key={item.label}
                     className={cn(
-                      "rounded-[1.3rem] border p-4 shadow-[0_12px_30px_rgba(0,0,0,0.18)]",
+                      "rounded-xl border px-2 py-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)]",
                       "highlight" in item && item.highlight
-                        ? "border-[#f5c842]/15 bg-[linear-gradient(180deg,rgba(245,200,66,0.06),rgba(255,244,235,0.02))]"
-                        : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.05),rgba(255,244,235,0.02))]"
+                        ? "border-[#d12429]/15 bg-[linear-gradient(180deg,rgba(209,36,41,0.06),rgba(236,217,186,0.02))]"
+                        : "isRisk" in item && item.isRisk
+                          ? riskBorder
+                          : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.05),rgba(255,244,235,0.02))]"
                     )}
                   >
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">{item.label}</div>
+                    <div className="text-[9px] uppercase tracking-[0.15em] text-white/45">{item.label}</div>
                     <div className={cn(
-                      "mt-2 text-2xl font-black",
-                      "highlight" in item && item.highlight && "text-[#f5c842]"
+                      "mt-1 font-heading text-base font-bold leading-tight",
+                      "highlight" in item && item.highlight && "text-[#d12429]",
+                      "isRisk" in item && item.isRisk && riskColor
                     )}>
                       {item.value}
                     </div>
@@ -712,17 +1020,20 @@ export default function Page() {
                 Principal returned at month end. You are risking conversion efficiency, not deposited BIRB.
               </div>
 
+              {/* Spacer to push button to bottom */}
+              <div className="flex-1 min-h-4" />
+
               {/* ── Main action button with deposit flow ── */}
               <button
                 onClick={handleMainAction}
                 disabled={buttonDisabled}
                 className={cn(
-                  "mt-5 h-14 w-full rounded-2xl text-base font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50",
+                  "mt-5 h-14 w-full rounded-2xl font-heading text-base font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50",
                   depositPhase === "ready"
-                    ? "bg-[linear-gradient(135deg,#b8432f,#d44a35)] hover:brightness-110 shadow-[0_0_24px_rgba(212,74,53,0.25)]"
+                    ? "bg-[linear-gradient(135deg,#7d050d,#d12429)] hover:brightness-110 shadow-[0_0_24px_rgba(209,36,41,0.3)]"
                     : depositPhase === "receiving"
-                      ? "bg-[#5a3f34]"
-                      : "bg-red-600 hover:bg-red-500"
+                      ? "bg-[#1e1a34]"
+                      : "bg-[#d12429] hover:bg-[#7d050d]"
                 )}
               >
                 {depositPhase === "receiving" ? (
@@ -738,51 +1049,153 @@ export default function Page() {
                   buttonLabel
                 )}
               </button>
+            </div>
+          </div>
+        </section>
 
-              {/* ── Result with gold glow ── */}
-              <AnimatePresence>
-                {result && (
+        {/* ── Outcome and History - Horizontal Section ── */}
+        <section className="relative mx-auto w-full max-w-7xl px-0 pb-8">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* ── Outcome Panel ── */}
+            <AnimatePresence mode="wait">
+              {result ? (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className={cn(
+                    "relative overflow-hidden rounded-[2rem] border p-6",
+                    result === "hit" && selected.length === 1
+                      ? "border-[#ffd700]/25 bg-[linear-gradient(180deg,rgba(255,215,0,0.08),rgba(20,14,12,0.95))]"
+                      : result === "hit"
+                        ? "border-[#22c55e]/25 bg-[linear-gradient(180deg,rgba(34,197,94,0.08),rgba(20,14,12,0.95))]"
+                        : "border-[#dc2626]/20 bg-[linear-gradient(180deg,rgba(220,38,38,0.08),rgba(20,14,12,0.95))]"
+                  )}
+                >
+                  {/* Radial glow overlay */}
                   <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0.5, 0.25] }}
+                    transition={{ duration: 1.5, times: [0, 0.3, 1] }}
                     className={cn(
-                      "relative mt-5 overflow-hidden rounded-[1.7rem] border p-5",
-                      result === "hit"
-                        ? "border-[#f5c842]/30 bg-[linear-gradient(180deg,rgba(245,200,66,0.08),rgba(212,160,108,0.04))]"
-                        : "border-white/10 bg-white/5"
+                      "pointer-events-none absolute inset-0 rounded-[2rem]",
+                      result === "hit" && selected.length === 1
+                        ? "bg-[radial-gradient(circle_at_50%_0%,rgba(255,215,0,0.25),transparent_60%)]"
+                        : result === "hit"
+                          ? "bg-[radial-gradient(circle_at_50%_0%,rgba(34,197,94,0.2),transparent_60%)]"
+                          : "bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.18),transparent_60%)]"
                     )}
-                  >
-                    {result === "hit" && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: [0, 0.6, 0.3] }}
-                        transition={{ duration: 1.5, times: [0, 0.3, 1] }}
-                        className="pointer-events-none absolute inset-0 rounded-[1.7rem] bg-[radial-gradient(circle_at_50%_0%,rgba(245,200,66,0.2),transparent_60%)]"
-                      />
-                    )}
-                    <div className="relative">
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
-                      <div className={cn(
-                        "mt-2 text-3xl font-black",
-                        result === "hit" && "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent"
-                      )}>
-                        {result === "hit" ? "Hit. Gold earned." : "Miss. No Gold this round."}
-                      </div>
-                      <div className="mt-3 text-sm leading-6 text-white/65">
-                        The prism landed on {CHARACTERS.find((c) => c.id === landed)?.name}. {result === "hit" ? "Your pick matched." : "Your pick missed."}
-                        {result === "hit" && (
-                          <span className="ml-1 font-bold text-[#f5c842]">
-                            +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
-                          </span>
-                        )}
-                      </div>
+                  />
+                  <div className="relative">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
+                    <div className={cn(
+                      "mt-2 font-heading text-3xl font-black md:text-4xl",
+                      result === "hit" && selected.length === 1
+                        ? "bg-gradient-to-r from-[#ffd700] via-[#ffec8b] to-[#ffd700] bg-clip-text text-transparent"
+                        : result === "hit" 
+                          ? "text-[#22c55e]"
+                          : "text-red-400"
+                    )}>
+                      {result === "hit" ? "Hit. Gold earned." : "Miss. No Gold this round."}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <div className="mt-3 text-sm leading-6 text-white/65">
+                      The prism landed on {CHARACTERS.find((c) => c.id === landed)?.name}. {result === "hit" ? "Your pick matched." : "Your pick missed."}
+                      {result === "hit" && (
+                        <span className={cn(
+                          "ml-1 font-bold",
+                          selected.length === 1 ? "text-[#ffd700]" : "text-[#22c55e]"
+                        )}>
+                          +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="placeholder"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center justify-center rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-6"
+                >
+                  <div className="text-center">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
+                    <div className="mt-2 text-sm text-white/20">Spin to see results</div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-              <PlayLog log={log} onReset={resetLog} />
+            {/* ── History Panel ── */}
+            <div className="rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
+                  {log.length > 0 && (
+                    <div className="flex items-center gap-2 text-sm font-bold">
+                      <span className="text-[#ecd9ba]">{log.filter((l) => l.result === "hit").length}W</span>
+                      <span className="text-white/25">·</span>
+                      <span className="text-white/45">{log.filter((l) => l.result === "miss").length}L</span>
+                    </div>
+                  )}
+                </div>
+                {log.length > 0 && (
+                  <button
+                    onClick={resetLog}
+                    className="rounded-full border border-white/20 bg-white/[0.03] px-4 py-1.5 text-[11px] font-medium text-white/60 transition hover:border-white/35 hover:bg-white/[0.06] hover:text-white/90"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+              {log.length === 0 ? (
+                <div className="flex h-20 items-center justify-center text-sm text-white/30">
+                  No plays yet
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+                    {[...log].reverse().map((entry, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "flex-shrink-0 min-w-[100px] rounded-xl border px-4 py-3",
+                          entry.result === "hit"
+                            ? "border-[#ecd9ba]/25 bg-[#ecd9ba]/[0.08]"
+                            : "border-white/10 bg-white/[0.02]"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 text-[10px] text-white/45 mb-1.5">
+                          <span className="font-medium">#{log.length - i}</span>
+                          <span className="text-white/30">{entry.picks.join(", ")}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-white/60">{entry.landed}</span>
+                          {entry.result === "hit" ? (
+                            <span className="text-sm font-bold text-[#ecd9ba]">
+                              +{entry.goldEarned}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/70">
+                              MISS
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Scroll indicators */}
+                  {log.length > 4 && (
+                    <>
+                      <div className="pointer-events-none absolute left-0 top-0 bottom-3 w-6 bg-gradient-to-r from-[#140e0c] to-transparent" />
+                      <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-6 bg-gradient-to-l from-[#140e0c] to-transparent" />
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
