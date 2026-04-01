@@ -6,8 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 /* ── Lofi Music System ── */
 function useLofiMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isMuted, setIsMuted] = useState(true);
-  const [volume, setVolume] = useState(0.15); // Lower default volume
+  const [isMuted, setIsMuted] = useState(false); // Start unmuted for autoplay
+  const [volume, setVolume] = useState(0.12); // Lower default volume
 
   useEffect(() => {
     // Create audio element on mount
@@ -15,6 +15,15 @@ function useLofiMusic() {
     audio.loop = true;
     audio.volume = volume;
     audioRef.current = audio;
+
+    // Attempt autoplay
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Autoplay was prevented, user needs to interact first
+        setIsMuted(true);
+      });
+    }
 
     return () => {
       audio.pause();
@@ -310,7 +319,7 @@ function HoloPrism({
         className={cn(
           "absolute h-[36rem] w-[36rem] rounded-full blur-3xl",
           isDramaticWin 
-            ? "bg-[#ecd9ba]/35" 
+            ? "bg-[#ffd700]/45" 
             : isGreenWin 
               ? "bg-[#22c55e]/25" 
               : result === "miss" && spinPhase === "done" 
@@ -332,7 +341,7 @@ function HoloPrism({
         className={cn(
           "absolute h-[24rem] w-[24rem] rounded-full blur-3xl",
           isDramaticWin 
-            ? "bg-[#ecd9ba]/25" 
+            ? "bg-[#ffec8b]/35" 
             : isGreenWin 
               ? "bg-[#86efac]/15" 
               : result === "miss" && spinPhase === "done" 
@@ -358,7 +367,7 @@ function HoloPrism({
             {[...Array(12)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute h-2 w-2 rounded-full bg-[#ecd9ba]"
+                className="absolute h-2 w-2 rounded-full bg-[#ffd700]"
                 initial={{ 
                   x: 0, 
                   y: 0, 
@@ -695,12 +704,10 @@ export default function Page() {
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-6 md:px-10">
         <header className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-md">
-              <img src="/logo.png" alt="birb" className="h-7 w-auto object-contain md:h-9" />
-            </div>
-            <div className="inline-flex rounded-full border border-[#f0dcc6]/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/70 backdrop-blur-md">
-              Cube Concept
+          <div className="flex items-center gap-4">
+            <img src="/logo.png" alt="birb" className="h-8 w-auto object-contain md:h-10" />
+            <div className="text-xs uppercase tracking-[0.2em] text-white/50">
+              Prism Concept
             </div>
           </div>
           <div className="hidden items-center gap-3 md:flex">
@@ -785,7 +792,7 @@ export default function Page() {
                     className={cn(
                       "pointer-events-none absolute inset-0 rounded-[2.25rem]",
                       result === "hit" && selected.length === 1
-                        ? "bg-[radial-gradient(circle_at_center,rgba(236,217,186,0.3),rgba(236,217,186,0.12)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(236,217,186,0.18)]"
+                        ? "bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.4),rgba(255,236,139,0.18)_40%,transparent_70%)] shadow-[inset_0_0_100px_rgba(255,215,0,0.25)]"
                         : result === "hit"
                           ? "bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.25),rgba(22,163,74,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(34,197,94,0.15)]"
                           : "bg-[radial-gradient(circle_at_center,rgba(209,36,41,0.25),rgba(125,5,13,0.1)_40%,transparent_70%)] shadow-[inset_0_0_80px_rgba(209,36,41,0.15)]"
@@ -877,21 +884,21 @@ export default function Page() {
                       className={cn(
                         "group relative overflow-hidden rounded-[1.6rem] border p-3 text-left transition-all duration-300 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
                         active 
-                          ? "border-[#d12429]/40 bg-[linear-gradient(180deg,rgba(209,36,41,0.12),rgba(125,5,13,0.08))] ring-1 ring-[#d12429]/20 shadow-[0_0_24px_rgba(209,36,41,0.15)]" 
+                          ? "border-[#c9a86c]/35 bg-[linear-gradient(180deg,rgba(201,168,108,0.1),rgba(160,130,80,0.05))] ring-1 ring-[#c9a86c]/15 shadow-[0_0_20px_rgba(201,168,108,0.1)]" 
                           : "border-[#f0dcc6]/8 bg-[linear-gradient(180deg,rgba(40,30,25,0.5),rgba(18,10,8,0.6))] hover:border-[#f0dcc6]/15 hover:bg-[rgba(40,30,25,0.7)]"
                       )}
                     >
                       <div className={cn(
                         "absolute inset-0 transition-opacity duration-300",
                         active 
-                          ? "bg-[radial-gradient(circle_at_top_left,rgba(209,36,41,0.15),transparent_40%)] opacity-100" 
+                          ? "bg-[radial-gradient(circle_at_top_left,rgba(201,168,108,0.12),transparent_40%)] opacity-100" 
                           : "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_28%)] opacity-50"
                       )} />
                       <div className="relative flex items-center gap-3">
                         <div className={cn(
                           "flex h-16 w-16 items-center justify-center rounded-[1.25rem] border p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md transition-all duration-300",
                           active 
-                            ? "border-[#d12429]/25 bg-[radial-gradient(circle_at_top,rgba(209,36,41,0.2),rgba(35,22,16,0.25))]" 
+                            ? "border-[#c9a86c]/20 bg-[radial-gradient(circle_at_top,rgba(180,145,85,0.18),rgba(35,22,16,0.25))]" 
                             : "border-[#f0dcc6]/8 bg-[radial-gradient(circle_at_top,rgba(80,55,40,0.3),rgba(28,17,12,0.5))]"
                         )}>
                           <CharacterArt 
@@ -912,14 +919,14 @@ export default function Page() {
                           )}>{character.name}</div>
                           <div className={cn(
                             "text-xs uppercase tracking-[0.18em] transition-colors duration-300",
-                            active ? "text-[#d12429]" : "text-white/30"
+                            active ? "text-[#c9a86c]" : "text-white/30"
                           )}>
                             {active ? "Selected" : "Tap to select"}
                           </div>
                         </div>
                         {active && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#d12429] text-white">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#c9a86c] text-[#1a1510]">
                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
@@ -1095,11 +1102,11 @@ export default function Page() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex items-center justify-center rounded-[2rem] border border-[#f0dcc6]/8 bg-[linear-gradient(180deg,rgba(255,248,240,0.03),rgba(14,8,6,0.42))] p-6"
+                  className="flex items-center justify-center rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-6"
                 >
                   <div className="text-center">
                     <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
-                    <div className="mt-2 text-lg text-white/20">Spin to see results</div>
+                    <div className="mt-2 text-sm text-white/20">Spin to see results</div>
                   </div>
                 </motion.div>
               )}
