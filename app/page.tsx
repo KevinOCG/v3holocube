@@ -320,6 +320,12 @@ export default function Page() {
   const [spinPhase, setSpinPhase] = useState<"idle" | "spinning" | "done">("idle");
   const [landed, setLanded] = useState<Character["id"]>("birb");
   const [result, setResult] = useState<null | "hit" | "miss">(null);
+  const [lastResult, setLastResult] = useState<{
+    result: "hit" | "miss";
+    landedId: Character["id"];
+    selectedIds: Character["id"][];
+    goldEarned: number;
+  } | null>(null);
   const [flash, setFlash] = useState(false);
   const [rotationDeg, setRotationDeg] = useState(0);
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -532,9 +538,18 @@ export default function Page() {
     const next = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
     const landedIndex = CHARACTERS.findIndex((c) => c.id === next.id);
 
-    setResult(null);
-    setFlash(false);
-    setLanded(next.id);
+  // Preserve current result as "last" so outcome card doesn't vanish mid-spin
+  if (result) {
+    setLastResult({
+      result,
+      landedId: landed,
+      selectedIds: [...selected],
+      goldEarned: depositNum * getGoldRateNum(selected.length, dayMultiplier),
+    });
+  }
+  setResult(null);
+  setFlash(false);
+  setLanded(next.id);
     setSpinning(true);
     setSpinPhase("spinning");
     setDepositPhase("spinning");
@@ -593,8 +608,9 @@ export default function Page() {
         setRotationDeg(finalTarget);
         setSpinning(false);
         setSpinPhase("done");
-        const isHit = selected.includes(next.id);
-        setResult(isHit ? "hit" : "miss");
+  const isHit = selected.includes(next.id);
+  setLastResult(null);
+  setResult(isHit ? "hit" : "miss");
         
         // Play win or lose sound — epic if single-pick win
         if (isHit) {
@@ -634,6 +650,7 @@ export default function Page() {
   function resetLog() {
     setLog([]);
     setResult(null);
+    setLastResult(null);
   }
 
   const hitChance = selected.length === 1 ? "25%" : selected.length === 2 ? "50%" : "75%";
@@ -1012,23 +1029,35 @@ export default function Page() {
         </section>
 
         {/* ── Outcome + History — full width row below the two columns ── */}
-        {(result || log.length > 0) && (
+        {(result || lastResult || log.length > 0) && (
           <div className="grid grid-cols-1 gap-4 pb-8 lg:grid-cols-2">
-            {/* Outcome */}
-            <AnimatePresence>
-              {result && (
+            {/* Outcome — shows live result, or grayed-out previous result while spinning */}
+            {(() => {
+              const displayResult = result ?? lastResult?.result ?? null;
+              const displayLanded = result ? landed : lastResult?.landedId ?? landed;
+              const displaySelected = result ? selected : lastResult?.selectedIds ?? selected;
+              const displayGold = result
+                ? depositNum * getGoldRateNum(selected.length, dayMultiplier)
+                : lastResult?.goldEarned ?? 0;
+              const isPast = !result && !!lastResult;
+
+              if (!displayResult) return <div />;
+
+              return (
                 <motion.div
+                  key={isPast ? "past" : "current"}
                   initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: isPast ? 0.45 : 1, y: 0 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   className={cn(
-                    "relative overflow-hidden rounded-[1.5rem] border p-5",
-                    result === "hit"
+                    "relative overflow-hidden rounded-[1.5rem] border p-5 transition-all duration-500",
+                    displayResult === "hit"
                       ? "border-[#f5c842]/30 bg-[linear-gradient(180deg,rgba(245,200,66,0.08),rgba(212,160,108,0.04))]"
-                      : "border-white/10 bg-white/5"
+                      : "border-white/10 bg-white/5",
+                    isPast && "grayscale"
                   )}
                 >
-                  {result === "hit" && (
+                  {displayResult === "hit" && !isPast && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: [0, 0.6, 0.3] }}
@@ -1037,36 +1066,47 @@ export default function Page() {
                     />
                   )}
                   <div className="relative">
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
+                      {isPast && (
+                        <div className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[9px] uppercase tracking-widest text-white/35">
+                          Previous
+                        </div>
+                      )}
+                    </div>
                     <div className={cn(
                       "mt-2 text-2xl font-black leading-tight",
-                      result === "hit" && "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent"
+                      displayResult === "hit" && !isPast && "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent",
+                      displayResult === "hit" && isPast && "text-white/50",
+                      displayResult === "miss" && "text-white/50"
                     )}>
-                      {result === "hit"
-                        ? selected.length === 1
+                      {displayResult === "hit"
+                        ? displaySelected.length === 1
                           ? "LEGENDARY. Max Gold."
                           : "Hit. Gold earned."
                         : "Miss. No Gold this round."}
                     </div>
-                    {result === "hit" && selected.length === 1 && (
+                    {displayResult === "hit" && displaySelected.length === 1 && !isPast && (
                       <div className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#f5c842]/60">
                         High Risk · Single Pick · Victory
                       </div>
                     )}
                     <div className="mt-3 text-sm leading-6 text-white/55">
-                      The prism landed on <span className="text-white/75 font-medium">{CHARACTERS.find((c) => c.id === landed)?.name}</span>.{" "}
-                      {result === "hit" ? "Your pick matched." : "Your pick missed."}
-                      {result === "hit" && (
-                        <span className="ml-1 font-bold text-[#f5c842]">
-                          +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
+                      The prism landed on{" "}
+                      <span className="font-medium text-white/75">
+                        {CHARACTERS.find((c) => c.id === displayLanded)?.name}
+                      </span>.{" "}
+                      {displayResult === "hit" ? "Pick matched." : "Pick missed."}
+                      {displayResult === "hit" && (
+                        <span className={cn("ml-1 font-bold", isPast ? "text-white/35" : "text-[#f5c842]")}>
+                          +{displayGold.toFixed(0)} Gold
                         </span>
                       )}
                     </div>
                   </div>
                 </motion.div>
-              )}
-              {!result && <div />}
-            </AnimatePresence>
+              );
+            })()}
 
             {/* History */}
             <PlayLog log={log} onReset={resetLog} />

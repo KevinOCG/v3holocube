@@ -1300,6 +1300,10 @@ video {
   padding-top: 0.125rem;
   padding-bottom: 0.125rem;
 }
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
 .pr-1 {
   padding-right: 0.25rem;
 }
@@ -1415,6 +1419,9 @@ video {
 }
 .tracking-\[0\.25em\] {
   letter-spacing: 0.25em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
 }
 .text-\[\#d4a06c\] {
   --tw-text-opacity: 1;
@@ -1686,6 +1693,10 @@ video {
 }
 .drop-shadow-\[0_18px_35px_rgba\(0\2c 0\2c 0\2c 0\.42\)\] {
   --tw-drop-shadow: drop-shadow(0 18px 35px rgba(0,0,0,0.42));
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.grayscale {
+  --tw-grayscale: grayscale(100%);
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .filter {
