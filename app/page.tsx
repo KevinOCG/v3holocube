@@ -393,6 +393,59 @@ export default function Page() {
     });
   }, []);
 
+  const playEpicWinSound = useCallback(() => {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    
+    // Impact thud
+    const bufferSize = audioContext.sampleRate * 0.15;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 4);
+    }
+    const noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = buffer;
+    const noiseGain = audioContext.createGain();
+    noiseGain.gain.setValueAtTime(0.35, audioContext.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+    noiseSource.connect(noiseGain);
+    noiseGain.connect(audioContext.destination);
+    noiseSource.start(audioContext.currentTime);
+
+    // Big chord swell — major chord C4 + E4 + G4 + C5
+    const chordNotes = [261.63, 329.63, 392.00, 523.25, 659.25];
+    chordNotes.forEach((freq, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.type = i < 2 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq * 0.5, audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq, audioContext.currentTime + 0.08);
+      gain.gain.setValueAtTime(0, audioContext.currentTime);
+      gain.gain.linearRampToValueAtTime(0.18, audioContext.currentTime + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.4);
+      osc.start(audioContext.currentTime);
+      osc.stop(audioContext.currentTime + 1.5);
+    });
+
+    // Ascending sparkle arpeggio
+    const sparkle = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+    sparkle.forEach((freq, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioContext.currentTime + 0.1 + i * 0.1);
+      gain.gain.setValueAtTime(0, audioContext.currentTime + 0.1 + i * 0.1);
+      gain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1 + i * 0.1 + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1 + i * 0.1 + 0.35);
+      osc.start(audioContext.currentTime + 0.1 + i * 0.1);
+      osc.stop(audioContext.currentTime + 0.1 + i * 0.1 + 0.4);
+    });
+  }, []);
+
   const playLoseSound = useCallback(() => {
     const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     
@@ -543,9 +596,13 @@ export default function Page() {
         const isHit = selected.includes(next.id);
         setResult(isHit ? "hit" : "miss");
         
-        // Play win or lose sound
+        // Play win or lose sound — epic if single-pick win
         if (isHit) {
-          playWinSound();
+          if (selected.length === 1) {
+            playEpicWinSound();
+          } else {
+            playWinSound();
+          }
         } else {
           playLoseSound();
         }
@@ -572,7 +629,7 @@ export default function Page() {
 
     if (animRef.current) cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(animate);
-  }, [spinning, selected, depositNum, dayMultiplier, playSpinSound, playWinSound, playLoseSound]);
+  }, [spinning, selected, depositNum, dayMultiplier, playSpinSound, playWinSound, playLoseSound, playEpicWinSound]);
 
   function resetLog() {
     setLog([]);
@@ -624,8 +681,8 @@ export default function Page() {
           </div>
         </header>
 
-        <section className="grid flex-1 items-center gap-10 py-8 lg:grid-cols-[1.08fr_0.92fr] lg:py-12">
-          <div className="order-2 lg:order-1">
+        <section className="grid flex-1 items-start gap-10 py-8 lg:grid-cols-[1.08fr_0.92fr] lg:py-12">
+          <div className="order-2 lg:order-1 lg:sticky lg:top-8">
             <div className="mb-6 max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-red-100/80">
                 Premium playtest concept
@@ -670,6 +727,30 @@ export default function Page() {
                         : "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_50%)]"
                     )}
                   />
+                )}
+              </AnimatePresence>
+
+              {/* Epic win burst — single pick only */}
+              <AnimatePresence>
+                {spinPhase === "done" && result === "hit" && selected.length === 1 && (
+                  <>
+                    <motion.div
+                      key="epic-burst"
+                      initial={{ opacity: 0, scale: 0.6 }}
+                      animate={{ opacity: [0, 0.9, 0.5, 0], scale: [0.6, 1.2, 1.5, 2] }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1.1, times: [0, 0.18, 0.5, 1], ease: "easeOut" }}
+                      className="pointer-events-none absolute inset-0 rounded-[2.25rem] bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.55),rgba(245,200,66,0.1)_45%,transparent_70%)]"
+                    />
+                    <motion.div
+                      key="epic-ring"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: [0, 1, 0], scale: [0.8, 1.05, 1.15] }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.7, times: [0, 0.3, 1] }}
+                      className="pointer-events-none absolute inset-0 rounded-[2.25rem] shadow-[inset_0_0_0_3px_rgba(245,200,66,0.8),0_0_60px_rgba(245,200,66,0.4)]"
+                    />
+                  </>
                 )}
               </AnimatePresence>
 
@@ -772,6 +853,65 @@ export default function Page() {
                   );
                 })}
               </div>
+
+              {/* ── Risk Indicator ── */}
+              {(() => {
+                const riskLevel = selected.length === 1 ? "high" : selected.length === 2 ? "medium" : "low";
+                const riskConfig = {
+                  high: {
+                    label: "HIGH RISK",
+                    desc: "1 pick · 25% hit chance · 4.40x reward",
+                    bar: "w-full",
+                    color: "text-red-400",
+                    border: "border-red-500/25",
+                    bg: "bg-red-500/8",
+                    fill: "bg-red-500",
+                    dots: 3,
+                  },
+                  medium: {
+                    label: "MEDIUM RISK",
+                    desc: "2 picks · 50% hit chance · 2.05x reward",
+                    bar: "w-2/3",
+                    color: "text-[#f5c842]",
+                    border: "border-[#f5c842]/20",
+                    bg: "bg-[#f5c842]/5",
+                    fill: "bg-[#f5c842]",
+                    dots: 2,
+                  },
+                  low: {
+                    label: "LOW RISK",
+                    desc: "3 picks · 75% hit chance · 1.20x reward",
+                    bar: "w-1/3",
+                    color: "text-emerald-400",
+                    border: "border-emerald-500/20",
+                    bg: "bg-emerald-500/5",
+                    fill: "bg-emerald-400",
+                    dots: 1,
+                  },
+                }[riskLevel];
+
+                return (
+                  <div className={cn("mt-3 flex items-center justify-between rounded-[1.2rem] border px-4 py-2.5 transition-all duration-300", riskConfig.border, riskConfig.bg)}>
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3].map((dot) => (
+                          <div
+                            key={dot}
+                            className={cn(
+                              "h-2 w-2 rounded-full transition-all duration-300",
+                              dot <= riskConfig.dots ? riskConfig.fill : "bg-white/10"
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <span className={cn("text-[10px] font-black uppercase tracking-[0.2em]", riskConfig.color)}>
+                        {riskConfig.label}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-white/35">{riskConfig.desc}</span>
+                  </div>
+                );
+              })()}
 
               {/* ── Day Decay Slider ── */}
               <div className="mt-5 rounded-[1.6rem] border border-[#f5c842]/15 bg-[linear-gradient(180deg,rgba(245,200,66,0.04),rgba(14,8,6,0.42))] p-4 shadow-[inset_0_1px_0_rgba(245,200,66,0.06)]">
@@ -893,8 +1033,17 @@ export default function Page() {
                         "mt-2 text-3xl font-black",
                         result === "hit" && "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent"
                       )}>
-                        {result === "hit" ? "Hit. Gold earned." : "Miss. No Gold this round."}
+                        {result === "hit"
+                          ? selected.length === 1
+                            ? "LEGENDARY. Max Gold."
+                            : "Hit. Gold earned."
+                          : "Miss. No Gold this round."}
                       </div>
+                      {result === "hit" && selected.length === 1 && (
+                        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-[#f5c842]/60">
+                          High Risk · Single Pick · Victory
+                        </div>
+                      )}
                       <div className="mt-3 text-sm leading-6 text-white/65">
                         The prism landed on {CHARACTERS.find((c) => c.id === landed)?.name}. {result === "hit" ? "Your pick matched." : "Your pick missed."}
                         {result === "hit" && (
