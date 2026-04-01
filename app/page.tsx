@@ -331,27 +331,48 @@ export default function Page() {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [currentDay, setCurrentDay] = useState(1);
   const [depositPhase, setDepositPhase] = useState<DepositPhase>("deposit");
+  const [musicMuted, setMusicMuted] = useState(false);
 
   const animRef = useRef<number | null>(null);
   const rotRef = useRef(0);
   const spinSoundRef = useRef<HTMLAudioElement | null>(null);
   const winSoundRef = useRef<HTMLAudioElement | null>(null);
   const loseSoundRef = useRef<HTMLAudioElement | null>(null);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize audio elements
+  // Initialize lofi background music
   useEffect(() => {
-    // Create spinning sound - using a simple tone
-    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    
-    // We'll use Web Audio API for sound generation
-    spinSoundRef.current = null; // Will use oscillator instead
-    winSoundRef.current = null;
-    loseSoundRef.current = null;
-    
+    const audio = new Audio("https://cdn.pixabay.com/audio/2024/11/06/audio_c9b2b89f0c.mp3");
+    audio.loop = true;
+    audio.volume = 0.22;
+    musicRef.current = audio;
+
+    const tryPlay = () => {
+      audio.play().catch(() => {
+        // Autoplay blocked — try on first user interaction
+        const unlock = () => {
+          audio.play().catch(() => {});
+          document.removeEventListener("click", unlock);
+          document.removeEventListener("keydown", unlock);
+        };
+        document.addEventListener("click", unlock, { once: true });
+        document.addEventListener("keydown", unlock, { once: true });
+      });
+    };
+    tryPlay();
+
     return () => {
-      audioContext.close();
+      audio.pause();
+      audio.src = "";
     };
   }, []);
+
+  // Sync mute state to audio element
+  useEffect(() => {
+    if (musicRef.current) {
+      musicRef.current.muted = musicMuted;
+    }
+  }, [musicMuted]);
 
   const playSpinSound = useCallback(() => {
     const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -692,6 +713,26 @@ export default function Page() {
             <div className="rounded-full border border-[#d4a06c]/30 bg-[#d4a06c]/10 px-4 py-2 text-sm text-[#f0dcc6] backdrop-blur-md">
               SOL: F8ow...Pepn
             </div>
+            {/* Music mute toggle */}
+            <button
+              onClick={() => setMusicMuted((m) => !m)}
+              title={musicMuted ? "Unmute music" : "Mute music"}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/60 backdrop-blur-md transition hover:border-white/30 hover:text-white/90"
+            >
+              {musicMuted ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+              )}
+            </button>
             <button className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">
               Disconnect
             </button>
@@ -850,22 +891,52 @@ export default function Page() {
                       key={character.id}
                       onClick={() => togglePick(character.id)}
                       className={cn(
-                        "group relative overflow-hidden rounded-[1.6rem] border p-3 text-left transition-all duration-200 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
-                        active ? "border-[#edd7bc]/28 bg-[#f0dcc6]/10" : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.03),rgba(18,10,8,0.34))] hover:bg-[#f0dcc6]/[0.06]"
+                        "group relative overflow-hidden rounded-[1.6rem] border p-3 text-left transition-all duration-300 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
+                        active
+                          ? "border-[#f5c842]/35 bg-[linear-gradient(135deg,rgba(245,200,66,0.12),rgba(240,220,198,0.07))] shadow-[0_0_28px_rgba(245,200,66,0.15)]"
+                          : "border-[#f0dcc6]/8 bg-[linear-gradient(180deg,rgba(255,248,240,0.02),rgba(18,10,8,0.45))] hover:border-[#f0dcc6]/18 hover:bg-[#f0dcc6]/[0.05]"
                       )}
                     >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_28%)]" />
+                      <div className={cn(
+                        "absolute inset-0 transition-opacity duration-300",
+                        active
+                          ? "bg-[radial-gradient(circle_at_top_left,rgba(245,200,66,0.1),transparent_40%)] opacity-100"
+                          : "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_28%)] opacity-100"
+                      )} />
                       <div className="relative flex items-center gap-3">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] border border-[#f0dcc6]/12 bg-[radial-gradient(circle_at_top,rgba(142,95,61,0.24),rgba(28,17,12,0.34))] p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md">
-                          <CharacterArt src={character.image} alt={character.name} className="h-full w-full rounded-xl object-cover mix-blend-lighten" />
+                        <div className={cn(
+                          "flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[1.25rem] border p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md transition-all duration-300",
+                          active
+                            ? "border-[#f5c842]/20 bg-[radial-gradient(circle_at_top,rgba(142,95,61,0.35),rgba(28,17,12,0.34))]"
+                            : "border-[#f0dcc6]/8 bg-[radial-gradient(circle_at_top,rgba(80,60,40,0.18),rgba(28,17,12,0.34))]"
+                        )}>
+                          <CharacterArt
+                            src={character.image}
+                            alt={character.name}
+                            className={cn(
+                              "h-full w-full rounded-xl object-cover mix-blend-lighten transition-all duration-300",
+                              active ? "opacity-100 saturate-100" : "opacity-40 saturate-0"
+                            )}
+                          />
                         </div>
                         <div>
-                          <div className="text-base font-bold">{character.name}</div>
-                          <div className="text-xs uppercase tracking-[0.18em] text-white/55">
+                          <div className={cn(
+                            "text-base font-bold transition-colors duration-300",
+                            active ? "text-white" : "text-white/35"
+                          )}>
+                            {character.name}
+                          </div>
+                          <div className={cn(
+                            "text-xs uppercase tracking-[0.18em] transition-colors duration-300",
+                            active ? "text-[#f5c842]/80" : "text-white/25"
+                          )}>
                             {active ? "Selected" : "Tap to select"}
                           </div>
                         </div>
                       </div>
+                      {active && (
+                        <div className="absolute right-3 top-3 h-2 w-2 rounded-full bg-[#f5c842] shadow-[0_0_6px_rgba(245,200,66,0.8)]" />
+                      )}
                     </button>
                   );
                 })}
