@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 function useLofiMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMuted, setIsMuted] = useState(false); // Start unmuted for autoplay
-  const [volume, setVolume] = useState(0.12); // Lower default volume
+  const [volume, setVolume] = useState(0.06); // Lower default volume
 
   useEffect(() => {
     // Create audio element on mount
@@ -715,7 +715,10 @@ export default function Page() {
             <div className="flex items-center gap-2 rounded-full border border-[#ecd9ba]/15 bg-black/20 px-3 py-2 backdrop-blur-md">
               <button
                 onClick={toggleMute}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[#ecd9ba]/60 transition hover:text-[#ecd9ba]"
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full transition",
+                  isMuted ? "text-[#ecd9ba]/40 hover:text-[#ecd9ba]/70" : "text-[#ecd9ba] hover:text-white"
+                )}
                 title={isMuted ? "Play music" : "Mute music"}
               >
                 {isMuted ? (
@@ -728,18 +731,27 @@ export default function Page() {
                   </svg>
                 )}
               </button>
-              {!isMuted && (
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volume}
-                  onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                  className="h-1 w-20 cursor-pointer appearance-none rounded-full bg-[#ecd9ba]/20 accent-[#d12429] [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429]"
-                  title={`Volume: ${Math.round(volume * 100)}%`}
-                />
-              )}
+              <input
+                type="range"
+                min="0"
+                max="0.3"
+                step="0.005"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => {
+                  const newVol = parseFloat(e.target.value);
+                  handleVolumeChange(newVol);
+                  if (newVol > 0 && isMuted) {
+                    toggleMute();
+                  }
+                }}
+                className={cn(
+                  "h-1 w-16 cursor-pointer appearance-none rounded-full bg-[#ecd9ba]/20 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full",
+                  isMuted 
+                    ? "[&::-webkit-slider-thumb]:bg-[#ecd9ba]/40" 
+                    : "[&::-webkit-slider-thumb]:bg-[#d12429]"
+                )}
+                title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+              />
             </div>
             <div className="rounded-full border border-[#ecd9ba]/30 bg-[#ecd9ba]/10 px-4 py-2 text-sm text-[#ecd9ba] backdrop-blur-md">
               SOL: F8ow...Pepn
@@ -973,17 +985,17 @@ export default function Page() {
               </div>
 
               {/* ── Stats ── */}
-              <div className="mt-5 grid gap-3 md:grid-cols-4">
+              <div className="mt-5 grid grid-cols-4 gap-2">
                 {[
-                  { label: "Hit Chance", value: hitChance },
-                  { label: "Gold Rate", value: goldRate, highlight: true },
-                  { label: "Risk Level", value: riskLevel, isRisk: true },
-                  { label: "Deposit", value: `${depositNum || 0} BIRB` },
+                  { label: "Hit", value: hitChance },
+                  { label: "Rate", value: goldRate, highlight: true },
+                  { label: "Risk", value: riskLevel, isRisk: true },
+                  { label: "Amt", value: `${depositNum || 0}` },
                 ].map((item) => (
                   <div
                     key={item.label}
                     className={cn(
-                      "rounded-[1.3rem] border p-4 shadow-[0_12px_30px_rgba(0,0,0,0.18)]",
+                      "rounded-xl border px-2 py-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)]",
                       "highlight" in item && item.highlight
                         ? "border-[#d12429]/15 bg-[linear-gradient(180deg,rgba(209,36,41,0.06),rgba(236,217,186,0.02))]"
                         : "isRisk" in item && item.isRisk
@@ -991,9 +1003,9 @@ export default function Page() {
                           : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.05),rgba(255,244,235,0.02))]"
                     )}
                   >
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">{item.label}</div>
+                    <div className="text-[9px] uppercase tracking-[0.15em] text-white/45">{item.label}</div>
                     <div className={cn(
-                      "mt-2 font-heading text-2xl font-black",
+                      "mt-1 font-heading text-base font-bold leading-tight",
                       "highlight" in item && item.highlight && "text-[#d12429]",
                       "isRisk" in item && item.isRisk && riskColor
                     )}>
@@ -1055,41 +1067,46 @@ export default function Page() {
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   className={cn(
                     "relative overflow-hidden rounded-[2rem] border p-6",
-                    result === "hit"
-                      ? "border-[#ecd9ba]/30 bg-[linear-gradient(180deg,rgba(236,217,186,0.08),rgba(236,217,186,0.03))]"
-                      : "border-red-500/20 bg-[linear-gradient(180deg,rgba(220,38,38,0.06),rgba(185,28,28,0.02))]"
+                    result === "hit" && selected.length === 1
+                      ? "border-[#ffd700]/25 bg-[linear-gradient(180deg,rgba(255,215,0,0.08),rgba(20,14,12,0.95))]"
+                      : result === "hit"
+                        ? "border-[#22c55e]/25 bg-[linear-gradient(180deg,rgba(34,197,94,0.08),rgba(20,14,12,0.95))]"
+                        : "border-[#dc2626]/20 bg-[linear-gradient(180deg,rgba(220,38,38,0.08),rgba(20,14,12,0.95))]"
                   )}
                 >
-                  {result === "hit" && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: [0, 0.6, 0.3] }}
-                      transition={{ duration: 1.5, times: [0, 0.3, 1] }}
-                      className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_50%_0%,rgba(236,217,186,0.2),transparent_60%)]"
-                    />
-                  )}
-                  {result === "miss" && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: [0, 0.4, 0.2] }}
-                      transition={{ duration: 1.5, times: [0, 0.3, 1] }}
-                      className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.15),transparent_60%)]"
-                    />
-                  )}
+                  {/* Radial glow overlay */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0.5, 0.25] }}
+                    transition={{ duration: 1.5, times: [0, 0.3, 1] }}
+                    className={cn(
+                      "pointer-events-none absolute inset-0 rounded-[2rem]",
+                      result === "hit" && selected.length === 1
+                        ? "bg-[radial-gradient(circle_at_50%_0%,rgba(255,215,0,0.25),transparent_60%)]"
+                        : result === "hit"
+                          ? "bg-[radial-gradient(circle_at_50%_0%,rgba(34,197,94,0.2),transparent_60%)]"
+                          : "bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.18),transparent_60%)]"
+                    )}
+                  />
                   <div className="relative">
                     <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
                     <div className={cn(
                       "mt-2 font-heading text-3xl font-black md:text-4xl",
-                      result === "hit" 
-                        ? "bg-gradient-to-r from-[#ecd9ba] via-white to-[#ecd9ba] bg-clip-text text-transparent"
-                        : "text-red-400"
+                      result === "hit" && selected.length === 1
+                        ? "bg-gradient-to-r from-[#ffd700] via-[#ffec8b] to-[#ffd700] bg-clip-text text-transparent"
+                        : result === "hit" 
+                          ? "text-[#22c55e]"
+                          : "text-red-400"
                     )}>
                       {result === "hit" ? "Hit. Gold earned." : "Miss. No Gold this round."}
                     </div>
                     <div className="mt-3 text-sm leading-6 text-white/65">
                       The prism landed on {CHARACTERS.find((c) => c.id === landed)?.name}. {result === "hit" ? "Your pick matched." : "Your pick missed."}
                       {result === "hit" && (
-                        <span className="ml-1 font-bold text-[#ecd9ba]">
+                        <span className={cn(
+                          "ml-1 font-bold",
+                          selected.length === 1 ? "text-[#ffd700]" : "text-[#22c55e]"
+                        )}>
                           +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
                         </span>
                       )}
