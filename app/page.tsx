@@ -72,25 +72,40 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
   const currentY = (1 - getBaseGoldMultiplier(currentDay)) * 100;
 
   return (
-    <svg viewBox="-2 -5 104 110" className="h-12 w-full" preserveAspectRatio="none">
-      <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
-      <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
-      <circle cx={currentX} cy={currentY} r="5" fill="#f5c842" stroke="#090605" strokeWidth="2" />
-      <circle cx={currentX} cy={currentY} r="9" fill="none" stroke="#f5c842" strokeWidth="1" opacity="0.6" />
-      <defs>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#f5c842" />
-          <stop offset="100%" stopColor="#d4a06c" />
-        </linearGradient>
-        <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="rgba(245,200,66,0.12)" />
-          <stop offset="100%" stopColor="rgba(245,200,66,0)" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <div className="relative h-12 w-full">
+      {/* Curve SVG - stretched to fill width */}
+      <svg viewBox="-2 -5 104 110" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+        <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+        <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+        <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+        <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
+        <defs>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f5c842" />
+            <stop offset="100%" stopColor="#d4a06c" />
+          </linearGradient>
+          <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(245,200,66,0.12)" />
+            <stop offset="100%" stopColor="rgba(245,200,66,0)" />
+          </linearGradient>
+        </defs>
+      </svg>
+      {/* Indicator dot - positioned as overlay so it doesn't stretch */}
+      <div 
+        className="absolute pointer-events-none"
+        style={{ 
+          left: `${currentX}%`, 
+          top: `${(currentY / 100) * 100}%`,
+          transform: 'translate(-50%, -50%)'
+        }}
+      >
+        <div className="relative">
+          <div className="absolute inset-0 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f5c842]/30 blur-sm" />
+          <div className="h-3 w-3 rounded-full bg-[#f5c842] border-2 border-[#090605] shadow-[0_0_8px_rgba(245,200,66,0.6)]" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -160,12 +175,14 @@ function HoloPrism({
   rotationDeg,
   isSpinning,
   spinPhase,
+  result,
 }: {
   landed: Character["id"];
   selected: Character["id"][];
   rotationDeg: number;
   isSpinning: boolean;
   spinPhase: "idle" | "spinning" | "done";
+  result: "hit" | "miss" | null;
 }) {
   return (
     <div className="relative flex h-[34rem] w-full items-center justify-center overflow-hidden">
@@ -236,9 +253,12 @@ function HoloPrism({
                   transition={isLanded ? { duration: 0.8, times: [0, 0.45, 1] } : isSelected ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
                               className={cn(
                                     "relative h-full w-full overflow-hidden rounded-[2rem] border bg-[linear-gradient(180deg,rgba(255,248,240,0.12),rgba(255,244,235,0.03)_18%,rgba(20,12,8,0.3)_100%)] backdrop-blur-2xl transition-all duration-500",
-                                    isSelected ? "border-[#e8c7a4]/30 ring-1 ring-[#e8c7a4]/22" : "border-[#d3b08b]/12",
+                                    isSelected 
+                                      ? "border-[#f5c842]/50 ring-2 ring-[#f5c842]/30 shadow-[0_0_30px_rgba(245,200,66,0.2)]" 
+                                      : "border-[#d3b08b]/12",
                                     face.glow,
-                                    isLanded && "shadow-[0_0_100px_rgba(245,200,66,0.5),0_0_60px_rgba(245,200,66,0.3)] border-[#f5c842]/60"
+                                    isLanded && result === "hit" && "shadow-[0_0_120px_rgba(245,200,66,0.6),0_0_60px_rgba(245,200,66,0.4)] border-[#f5c842]/80",
+                                    isLanded && result === "miss" && "shadow-[0_0_120px_rgba(220,38,38,0.5),0_0_60px_rgba(220,38,38,0.3)] border-red-500/70"
                                   )}
                 >
                   <div className={cn("absolute inset-0 bg-gradient-to-br opacity-95", face.tint)} />
@@ -259,16 +279,22 @@ function HoloPrism({
                     </div>
                   </div>
 
-                  {isSelected && (
-                    <div className="absolute right-3 top-3 rounded-full border border-[#f1ddc6]/16 bg-[#f0dcc6]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#fff6ed] backdrop-blur-md">
-                      Selected
-                    </div>
-                  )}
+{isSelected && (
+                                    <div className="absolute right-3 top-3 rounded-full border border-[#f5c842]/40 bg-[#f5c842]/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#f5c842] backdrop-blur-md shadow-[0_0_12px_rgba(245,200,66,0.3)]">
+                                      Selected
+                                    </div>
+                                  )}
 
-                  {isLanded && (
+                  {isLanded && result === "hit" && (
                                     <>
-                                      <div className="absolute inset-0 rounded-[2rem] ring-[3px] ring-[#f5c842] shadow-[inset_0_0_30px_rgba(245,200,66,0.25)]" />
-                                      <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.15),transparent_70%)]" />
+                                      <div className="absolute inset-0 rounded-[2rem] ring-[3px] ring-[#f5c842] shadow-[inset_0_0_40px_rgba(245,200,66,0.35)]" />
+                                      <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.2),transparent_70%)]" />
+                                    </>
+                                  )}
+                                  {isLanded && result === "miss" && (
+                                    <>
+                                      <div className="absolute inset-0 rounded-[2rem] ring-[3px] ring-red-500 shadow-[inset_0_0_40px_rgba(220,38,38,0.3)]" />
+                                      <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.15),transparent_70%)]" />
                                     </>
                                   )}
                 </motion.div>
@@ -302,6 +328,91 @@ export default function Page() {
 
   const animRef = useRef<number | null>(null);
   const rotRef = useRef(0);
+  const spinSoundRef = useRef<HTMLAudioElement | null>(null);
+  const winSoundRef = useRef<HTMLAudioElement | null>(null);
+  const loseSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio elements
+  useEffect(() => {
+    // Create spinning sound - using a simple tone
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    
+    // We'll use Web Audio API for sound generation
+    spinSoundRef.current = null; // Will use oscillator instead
+    winSoundRef.current = null;
+    loseSoundRef.current = null;
+    
+    return () => {
+      audioContext.close();
+    };
+  }, []);
+
+  const playSpinSound = useCallback(() => {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    
+    // Create a whooshing spin sound
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.5);
+    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 3);
+    
+    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 3);
+  }, []);
+
+  const playWinSound = useCallback(() => {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    
+    // Victory fanfare - ascending notes
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.12);
+      
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime + i * 0.12);
+      gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + i * 0.12 + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.12 + 0.4);
+      
+      oscillator.start(audioContext.currentTime + i * 0.12);
+      oscillator.stop(audioContext.currentTime + i * 0.12 + 0.5);
+    });
+  }, []);
+
+  const playLoseSound = useCallback(() => {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    
+    // Sad descending tone
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.5);
+    
+    gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.6);
+  }, []);
 
   const depositNum = Math.max(0, Number(deposit) || 0);
   const dayMultiplier = getBaseGoldMultiplier(currentDay);
@@ -374,6 +485,9 @@ export default function Page() {
     setSpinning(true);
     setSpinPhase("spinning");
     setDepositPhase("spinning");
+    
+    // Play spinning sound
+    playSpinSound();
 
     const fullSpins = 3 + Math.floor(Math.random() * 2);
 
@@ -428,6 +542,13 @@ export default function Page() {
         setSpinPhase("done");
         const isHit = selected.includes(next.id);
         setResult(isHit ? "hit" : "miss");
+        
+        // Play win or lose sound
+        if (isHit) {
+          playWinSound();
+        } else {
+          playLoseSound();
+        }
 
         const goldEarned = isHit
           ? (depositNum * currentGoldRate).toFixed(0)
@@ -451,7 +572,7 @@ export default function Page() {
 
     if (animRef.current) cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(animate);
-  }, [spinning, selected, depositNum, dayMultiplier]);
+  }, [spinning, selected, depositNum, dayMultiplier, playSpinSound, playWinSound, playLoseSound]);
 
   function resetLog() {
     setLog([]);
@@ -558,6 +679,7 @@ export default function Page() {
                 landed={landed}
                 selected={selected}
                 rotationDeg={rotationDeg}
+                result={result}
               />
             </div>
           </div>
