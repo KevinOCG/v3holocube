@@ -117,11 +117,11 @@ function PlayLog({ log, onReset }: { log: LogEntry[]; onReset: () => void }) {
   const losses = log.length - wins;
 
   return (
-    <div className="mt-5 rounded-[1.7rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.04),rgba(14,8,6,0.42))] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-white/45">History</div>
-          <div className="flex items-center gap-1.5 text-sm font-bold">
+    <div className="rounded-[1.5rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.04),rgba(14,8,6,0.42))] p-4">
+      <div className="mb-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">History</div>
+          <div className="flex items-center gap-1 text-xs font-bold">
             <span className="text-[#f5c842]">{wins}W</span>
             <span className="text-white/20">·</span>
             <span className="text-white/40">{losses}L</span>
@@ -129,12 +129,12 @@ function PlayLog({ log, onReset }: { log: LogEntry[]; onReset: () => void }) {
         </div>
         <button
           onClick={onReset}
-          className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-semibold text-white/50 transition hover:border-white/30 hover:text-white/80"
+          className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[9px] font-semibold text-white/50 transition hover:border-white/30 hover:text-white/80"
         >
           Reset
         </button>
       </div>
-      <div className="h-[7.5rem] space-y-1 overflow-y-auto pr-1">
+      <div className="h-[8rem] space-y-1 overflow-y-auto pr-1">
         {[...log].reverse().map((entry, i) => (
           <div
             key={i}
@@ -1005,59 +1005,67 @@ export default function Page() {
                 )}
               </button>
 
-              {/* ── Result with gold glow ── */}
-              <AnimatePresence>
-                {result && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className={cn(
-                      "relative mt-5 overflow-hidden rounded-[1.7rem] border p-5",
-                      result === "hit"
-                        ? "border-[#f5c842]/30 bg-[linear-gradient(180deg,rgba(245,200,66,0.08),rgba(212,160,108,0.04))]"
-                        : "border-white/10 bg-white/5"
-                    )}
-                  >
-                    {result === "hit" && (
+              {/* ── Outcome + History side by side ── */}
+              {(result || log.length > 0) && (
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  {/* Outcome */}
+                  <AnimatePresence>
+                    {result && (
                       <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: [0, 0.6, 0.3] }}
-                        transition={{ duration: 1.5, times: [0, 0.3, 1] }}
-                        className="pointer-events-none absolute inset-0 rounded-[1.7rem] bg-[radial-gradient(circle_at_50%_0%,rgba(245,200,66,0.2),transparent_60%)]"
-                      />
-                    )}
-                    <div className="relative">
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
-                      <div className={cn(
-                        "mt-2 text-3xl font-black",
-                        result === "hit" && "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent"
-                      )}>
-                        {result === "hit"
-                          ? selected.length === 1
-                            ? "LEGENDARY. Max Gold."
-                            : "Hit. Gold earned."
-                          : "Miss. No Gold this round."}
-                      </div>
-                      {result === "hit" && selected.length === 1 && (
-                        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-[#f5c842]/60">
-                          High Risk · Single Pick · Victory
-                        </div>
-                      )}
-                      <div className="mt-3 text-sm leading-6 text-white/65">
-                        The prism landed on {CHARACTERS.find((c) => c.id === landed)?.name}. {result === "hit" ? "Your pick matched." : "Your pick missed."}
-                        {result === "hit" && (
-                          <span className="ml-1 font-bold text-[#f5c842]">
-                            +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
-                          </span>
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        className={cn(
+                          "relative overflow-hidden rounded-[1.5rem] border p-4",
+                          result === "hit"
+                            ? "border-[#f5c842]/30 bg-[linear-gradient(180deg,rgba(245,200,66,0.08),rgba(212,160,108,0.04))]"
+                            : "border-white/10 bg-white/5"
                         )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                      >
+                        {result === "hit" && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: [0, 0.6, 0.3] }}
+                            transition={{ duration: 1.5, times: [0, 0.3, 1] }}
+                            className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-[radial-gradient(circle_at_50%_0%,rgba(245,200,66,0.2),transparent_60%)]"
+                          />
+                        )}
+                        <div className="relative">
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-white/45">Outcome</div>
+                          <div className={cn(
+                            "mt-1.5 text-lg font-black leading-tight",
+                            result === "hit" && "bg-gradient-to-r from-[#f5c842] via-[#fde68a] to-[#d4a06c] bg-clip-text text-transparent"
+                          )}>
+                            {result === "hit"
+                              ? selected.length === 1
+                                ? "LEGENDARY."
+                                : "Hit. Gold."
+                              : "Miss."}
+                          </div>
+                          {result === "hit" && selected.length === 1 && (
+                            <div className="mt-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#f5c842]/55">
+                              High Risk · Victory
+                            </div>
+                          )}
+                          <div className="mt-2 text-xs leading-5 text-white/55">
+                            Landed on <span className="text-white/75 font-medium">{CHARACTERS.find((c) => c.id === landed)?.name}</span>.{" "}
+                            {result === "hit" ? "Pick matched." : "Pick missed."}
+                          </div>
+                          {result === "hit" && (
+                            <div className="mt-1.5 text-sm font-bold text-[#f5c842]">
+                              +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                    {!result && <div />}
+                  </AnimatePresence>
 
-              <PlayLog log={log} onReset={resetLog} />
+                  {/* History */}
+                  <PlayLog log={log} onReset={resetLog} />
+                </div>
+              )}
             </div>
           </div>
         </section>
