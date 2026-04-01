@@ -3,6 +3,107 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+/* ── Lofi Music System ── */
+function useLofiMusic() {
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const oscillatorsRef = useRef<OscillatorNode[]>([]);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      gainNodeRef.current = audioContextRef.current.createGain();
+      gainNodeRef.current.connect(audioContextRef.current.destination);
+      gainNodeRef.current.gain.value = 0;
+    }
+    return audioContextRef.current;
+  }, []);
+
+  const playLofiLoop = useCallback(() => {
+    const ctx = getAudioContext();
+    if (!gainNodeRef.current) return;
+
+    // Lofi chord progression: Cmaj7 -> Am7 -> Fmaj7 -> G7
+    const chords = [
+      [261.63, 329.63, 392.00, 493.88], // Cmaj7
+      [220.00, 261.63, 329.63, 392.00], // Am7
+      [174.61, 220.00, 261.63, 329.63], // Fmaj7
+      [196.00, 246.94, 293.66, 349.23], // G7
+    ];
+
+    let chordIndex = 0;
+
+    const playChord = () => {
+      if (!isPlaying || !gainNodeRef.current) return;
+
+      // Stop previous oscillators
+      oscillatorsRef.current.forEach(osc => {
+        try { osc.stop(); } catch {}
+      });
+      oscillatorsRef.current = [];
+
+      const chord = chords[chordIndex % chords.length];
+      
+      chord.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const noteGain = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        
+        noteGain.gain.setValueAtTime(0, ctx.currentTime);
+        noteGain.gain.linearRampToValueAtTime(0.03 - i * 0.005, ctx.currentTime + 0.3);
+        noteGain.gain.linearRampToValueAtTime(0.02 - i * 0.004, ctx.currentTime + 1.5);
+        noteGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+        
+        osc.connect(noteGain);
+        noteGain.connect(gainNodeRef.current!);
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 2);
+        oscillatorsRef.current.push(osc);
+      });
+
+      chordIndex++;
+    };
+
+    playChord();
+    const interval = setInterval(playChord, 2000);
+    return () => clearInterval(interval);
+  }, [getAudioContext, isPlaying]);
+
+  useEffect(() => {
+    if (isPlaying && !isMuted) {
+      const cleanup = playLofiLoop();
+      return cleanup;
+    }
+  }, [isPlaying, isMuted, playLofiLoop]);
+
+  useEffect(() => {
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.linearRampToValueAtTime(
+        isMuted ? 0 : 1,
+        (audioContextRef.current?.currentTime || 0) + 0.1
+      );
+    }
+  }, [isMuted]);
+
+  const toggleMute = useCallback(() => {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    if (!isPlaying) {
+      setIsPlaying(true);
+    }
+    setIsMuted(prev => !prev);
+  }, [getAudioContext, isPlaying]);
+
+  return { isMuted, toggleMute };
+}
+
 /* ── Sound Effects System ── */
 function useSoundEffects() {
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -178,6 +279,9 @@ type DepositPhase = "deposit" | "receiving" | "ready" | "spinning";
 
 /* ── Day Decay Curve Visualization ── */
 function DayDecayCurve({ currentDay }: { currentDay: number }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [circlePos, setCirclePos] = useState({ x: 0, y: 0 });
+
   const points = useMemo(() => {
     const pts: string[] = [];
     for (let d = 1; d <= 28; d++) {
@@ -191,29 +295,45 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
   const currentX = ((currentDay - 1) / 27) * 100;
   const currentY = (1 - getBaseGoldMultiplier(currentDay)) * 100;
 
+  // Calculate actual pixel position for the circle overlay
+  useEffect(() => {
+    if (svgRef.current) {
+      const svg = svgRef.current;
+      const rect = svg.getBoundingClientRect();
+      // Map viewBox coordinates to actual pixels
+      const pixelX = (currentX / 100) * rect.width;
+      const pixelY = ((currentY + 5) / 110) * rect.height; // Account for viewBox offset
+      setCirclePos({ x: pixelX, y: pixelY });
+    }
+  }, [currentDay, currentX, currentY]);
+
   return (
-    <svg viewBox="-2 -5 104 110" className="h-12 w-full" preserveAspectRatio="xMidYMid meet">
-      <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
-      <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
-      {/* Fixed aspect ratio circle - use transform to maintain circular shape */}
-      <g transform={`translate(${currentX}, ${currentY})`}>
-        <circle cx="0" cy="0" r="4" fill="#f5c842" stroke="#090605" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-        <circle cx="0" cy="0" r="7" fill="none" stroke="#f5c842" strokeWidth="0.5" opacity="0.5" vectorEffect="non-scaling-stroke" />
-      </g>
-      <defs>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#f5c842" />
-          <stop offset="100%" stopColor="#d4a06c" />
-        </linearGradient>
-        <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="rgba(245,200,66,0.12)" />
-          <stop offset="100%" stopColor="rgba(245,200,66,0)" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <div className="relative h-12 w-full">
+      <svg ref={svgRef} viewBox="-2 -5 104 110" className="h-full w-full" preserveAspectRatio="none">
+        <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
+        <defs>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f5c842" />
+            <stop offset="100%" stopColor="#d4a06c" />
+          </linearGradient>
+          <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(245,200,66,0.12)" />
+            <stop offset="100%" stopColor="rgba(245,200,66,0)" />
+          </linearGradient>
+        </defs>
+      </svg>
+      {/* Circle indicator rendered as DOM element to maintain aspect ratio */}
+      <div 
+        className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f5c842] shadow-[0_0_8px_rgba(245,200,66,0.6)]"
+        style={{ left: circlePos.x, top: circlePos.y }}
+      >
+        <div className="absolute inset-[-4px] rounded-full border border-[#f5c842]/40" />
+      </div>
+    </div>
   );
 }
 
@@ -412,6 +532,7 @@ export default function Page() {
   const rotRef = useRef(0);
 
   const { playSpinSound, playWinSound, playLoseSound } = useSoundEffects();
+  const { isMuted, toggleMute } = useLofiMusic();
 
   const depositNum = Math.max(0, Number(deposit) || 0);
   const dayMultiplier = getBaseGoldMultiplier(currentDay);
@@ -618,6 +739,22 @@ export default function Page() {
             </div>
           </div>
           <div className="hidden items-center gap-3 md:flex">
+            {/* Music Toggle */}
+            <button
+              onClick={toggleMute}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#f0dcc6]/15 bg-white/5 text-white/60 backdrop-blur-md transition hover:border-[#f0dcc6]/30 hover:text-white"
+              title={isMuted ? "Play music" : "Mute music"}
+            >
+              {isMuted ? (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                </svg>
+              )}
+            </button>
             <div className="rounded-full border border-[#d4a06c]/30 bg-[#d4a06c]/10 px-4 py-2 text-sm text-[#f0dcc6] backdrop-blur-md">
               SOL: F8ow...Pepn
             </div>
@@ -627,8 +764,8 @@ export default function Page() {
           </div>
         </header>
 
-        <section className="grid flex-1 items-start gap-10 py-8 lg:grid-cols-2 lg:py-12">
-          <div className="order-2 lg:order-1">
+        <section className="grid flex-1 gap-10 py-8 lg:grid-cols-2 lg:py-12">
+          <div className="order-2 flex flex-col lg:order-1">
             <div className="mb-6 max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-red-100/80">
                 Premium playtest concept
@@ -645,7 +782,7 @@ export default function Page() {
             </div>
 
             {/* ── Prism Container ── */}
-            <div className="relative flex min-h-[30rem] items-center justify-center rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_30px_90px_rgba(0,0,0,0.32)] backdrop-blur-xl">
+            <div className="relative flex flex-1 items-center justify-center rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_30px_90px_rgba(0,0,0,0.32)] backdrop-blur-xl">
               <AnimatePresence>
                 {flash && (
                   <motion.div
@@ -688,8 +825,8 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="order-1 lg:order-2">
-            <div className="rounded-[2.2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.06),rgba(255,244,235,0.025))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
+          <div className="order-1 flex flex-col lg:order-2">
+            <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.06),rgba(255,244,235,0.025))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-[0.2em] text-white/45">Entry Flow</div>
@@ -882,6 +1019,9 @@ export default function Page() {
                 Principal returned at month end. You are risking conversion efficiency, not deposited BIRB.
               </div>
 
+              {/* Spacer to push button to bottom */}
+              <div className="flex-1 min-h-4" />
+
               {/* ── Main action button with deposit flow ── */}
               <button
                 onClick={handleMainAction}
@@ -984,61 +1124,70 @@ export default function Page() {
             </AnimatePresence>
 
             {/* ── History Panel ── */}
-            <div className="rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.04),rgba(14,8,6,0.42))] p-6">
+            <div className="rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
               <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-xs uppercase tracking-[0.18em] text-white/45">History</div>
+                <div className="flex items-center gap-4">
+                  <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
                   {log.length > 0 && (
-                    <div className="flex items-center gap-1.5 text-sm font-bold">
+                    <div className="flex items-center gap-2 text-sm font-bold">
                       <span className="text-[#f5c842]">{log.filter((l) => l.result === "hit").length}W</span>
-                      <span className="text-white/20">·</span>
-                      <span className="text-white/40">{log.filter((l) => l.result === "miss").length}L</span>
+                      <span className="text-white/25">·</span>
+                      <span className="text-white/45">{log.filter((l) => l.result === "miss").length}L</span>
                     </div>
                   )}
                 </div>
                 {log.length > 0 && (
                   <button
                     onClick={resetLog}
-                    className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-semibold text-white/50 transition hover:border-white/30 hover:text-white/80"
+                    className="rounded-full border border-white/20 bg-white/[0.03] px-4 py-1.5 text-[11px] font-medium text-white/60 transition hover:border-white/35 hover:bg-white/[0.06] hover:text-white/90"
                   >
                     Reset
                   </button>
                 )}
               </div>
               {log.length === 0 ? (
-                <div className="flex h-24 items-center justify-center text-sm text-white/25">
+                <div className="flex h-20 items-center justify-center text-sm text-white/30">
                   No plays yet
                 </div>
               ) : (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {[...log].reverse().map((entry, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        "flex-shrink-0 rounded-xl border px-4 py-3 text-xs",
-                        entry.result === "hit"
-                          ? "border-[#f5c842]/20 bg-[#f5c842]/[0.06]"
-                          : "border-red-500/15 bg-red-500/[0.04]"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 text-[10px] text-white/40 mb-1">
-                        <span>#{log.length - i}</span>
-                        <span>{entry.picks.join(", ")}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white/50">{entry.landed}</span>
-                        {entry.result === "hit" ? (
-                          <span className="font-bold text-[#f5c842]">
-                            +{entry.goldEarned}
-                          </span>
-                        ) : (
-                          <span className="font-bold uppercase tracking-wide text-red-400/60">
-                            MISS
-                          </span>
+                <div className="relative">
+                  <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+                    {[...log].reverse().map((entry, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "flex-shrink-0 min-w-[100px] rounded-xl border px-4 py-3",
+                          entry.result === "hit"
+                            ? "border-[#f5c842]/25 bg-[#f5c842]/[0.08]"
+                            : "border-white/10 bg-white/[0.02]"
                         )}
+                      >
+                        <div className="flex items-center gap-2 text-[10px] text-white/45 mb-1.5">
+                          <span className="font-medium">#{log.length - i}</span>
+                          <span className="text-white/30">{entry.picks.join(", ")}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-white/60">{entry.landed}</span>
+                          {entry.result === "hit" ? (
+                            <span className="text-sm font-bold text-[#f5c842]">
+                              +{entry.goldEarned}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/70">
+                              MISS
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  {/* Scroll indicators */}
+                  {log.length > 4 && (
+                    <>
+                      <div className="pointer-events-none absolute left-0 top-0 bottom-3 w-6 bg-gradient-to-r from-[#140e0c] to-transparent" />
+                      <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-6 bg-gradient-to-l from-[#140e0c] to-transparent" />
+                    </>
+                  )}
                 </div>
               )}
             </div>
