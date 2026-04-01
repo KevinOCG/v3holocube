@@ -78,8 +78,8 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
       <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
       <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
-      <circle cx={currentX} cy={currentY} r="3" fill="#f5c842" stroke="#090605" strokeWidth="1.5" />
-      <circle cx={currentX} cy={currentY} r="6" fill="none" stroke="#f5c842" strokeWidth="0.5" opacity="0.5" />
+      <circle cx={currentX} cy={currentY} r="5" fill="#f5c842" stroke="#090605" strokeWidth="2" />
+      <circle cx={currentX} cy={currentY} r="9" fill="none" stroke="#f5c842" strokeWidth="1" opacity="0.6" />
       <defs>
         <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#f5c842" />
@@ -234,12 +234,12 @@ function HoloPrism({
                     isLanded ? { y: [-2, -12, -5], scale: [1, 1.04, 1.012] } : isSelected ? { y: [0, -3, 0] } : { y: 0 }
                   }
                   transition={isLanded ? { duration: 0.8, times: [0, 0.45, 1] } : isSelected ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-                  className={cn(
-                    "relative h-full w-full overflow-hidden rounded-[2rem] border bg-[linear-gradient(180deg,rgba(255,248,240,0.12),rgba(255,244,235,0.03)_18%,rgba(20,12,8,0.3)_100%)] backdrop-blur-2xl",
-                    isSelected ? "border-[#e8c7a4]/30 ring-1 ring-[#e8c7a4]/22" : "border-[#d3b08b]/12",
-                    face.glow,
-                    isLanded && "shadow-[0_0_85px_rgba(238,205,166,0.2)]"
-                  )}
+                              className={cn(
+                                    "relative h-full w-full overflow-hidden rounded-[2rem] border bg-[linear-gradient(180deg,rgba(255,248,240,0.12),rgba(255,244,235,0.03)_18%,rgba(20,12,8,0.3)_100%)] backdrop-blur-2xl transition-all duration-500",
+                                    isSelected ? "border-[#e8c7a4]/30 ring-1 ring-[#e8c7a4]/22" : "border-[#d3b08b]/12",
+                                    face.glow,
+                                    isLanded && "shadow-[0_0_100px_rgba(245,200,66,0.5),0_0_60px_rgba(245,200,66,0.3)] border-[#f5c842]/60"
+                                  )}
                 >
                   <div className={cn("absolute inset-0 bg-gradient-to-br opacity-95", face.tint)} />
                   <div className="absolute inset-[1px] rounded-[1.95rem] bg-[linear-gradient(180deg,rgba(255,248,240,0.18),rgba(255,246,238,0.03)_28%,rgba(16,10,7,0.22)_100%)]" />
@@ -265,7 +265,12 @@ function HoloPrism({
                     </div>
                   )}
 
-                  {isLanded && <div className="absolute inset-0 rounded-[2rem] ring-2 ring-[#f2debf]/70" />}
+                  {isLanded && (
+                                    <>
+                                      <div className="absolute inset-0 rounded-[2rem] ring-[3px] ring-[#f5c842] shadow-[inset_0_0_30px_rgba(245,200,66,0.25)]" />
+                                      <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_center,rgba(245,200,66,0.15),transparent_70%)]" />
+                                    </>
+                                  )}
                 </motion.div>
               </div>
             );
@@ -475,9 +480,8 @@ export default function Page() {
       </div>
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(130,82,52,0.22),transparent_24%),radial-gradient(circle_at_78%_50%,rgba(179,120,76,0.14),transparent_16%),radial-gradient(circle_at_50%_110%,rgba(255,244,232,0.06),transparent_20%)]" />
 
-      {/* ── Toobins art elements ── */}
+      {/* ── Toobins art element ── */}
       <img src="/toobins-r.png" alt="" className="pointer-events-none fixed right-0 top-0 h-auto w-[28rem] object-contain opacity-20 mix-blend-lighten lg:opacity-30" />
-      <img src="/toobins-l.png" alt="" className="pointer-events-none fixed bottom-0 left-0 h-auto w-[22rem] object-contain opacity-15 mix-blend-lighten lg:opacity-25" />
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-6 md:px-10">
         <header className="flex items-center justify-between gap-4">
@@ -505,9 +509,9 @@ export default function Page() {
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-red-100/80">
                 Premium playtest concept
               </div>
-              <h1 className="text-4xl font-black leading-[0.95] tracking-tight md:text-6xl">
+              <h1 className="text-4xl font-black leading-[1.1] tracking-tight md:text-6xl">
                 Predict the landing.
-                <span className="block bg-gradient-to-r from-white via-[#f8e7d4] to-[#d4a06c] bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-white via-[#f8e7d4] to-[#d4a06c] bg-clip-text text-transparent pb-1">
                   Keep your BIRB.
                 </span>
               </h1>
