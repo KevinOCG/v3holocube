@@ -391,7 +391,7 @@ function ConfirmationModal({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Create Team Modal
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────��─────
 function CreateTeamModal({
   isOpen,
   onClose,
@@ -1115,13 +1115,16 @@ export default function TeamsPage() {
   const [showShareModal, setShowShareModal] = useState(false);
 
   const handleTeamCreated = useCallback((team: Team) => {
-    joinTeam({
+    console.log("[v0] handleTeamCreated called with:", team);
+    const mappedTeam = {
       name: team.name,
       code: team.code,
       volume: team.totalVolume,
       rank: team.rank || 99,
       memberCount: team.members.length,
-    });
+    };
+    console.log("[v0] mapped team:", mappedTeam);
+    joinTeam(mappedTeam);
   }, [joinTeam]);
 
   const handleTeamJoined = useCallback((team: Team) => {

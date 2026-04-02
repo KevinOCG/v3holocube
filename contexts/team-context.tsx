@@ -24,6 +24,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [team, setTeam] = useState<Team | null>(null);
 
   const joinTeam = useCallback((newTeam: Team) => {
+    console.log("[v0] joinTeam called with:", newTeam);
     setTeam(newTeam);
   }, []);
 
