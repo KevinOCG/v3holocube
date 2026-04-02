@@ -999,7 +999,7 @@ export default function Page() {
           <div className="order-2 flex flex-col lg:order-1">
             <div className="mb-6 max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#d12429]/30 bg-[#d12429]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ecd9ba]/80">
-                Premium playtest concept
+                Birb Game 5
               </div>
               <h1 className="font-heading text-4xl font-black leading-[0.95] tracking-tight md:text-6xl">
                 Predict the landing.
@@ -1008,7 +1008,7 @@ export default function Page() {
                 </span>
               </h1>
               <p className="mt-4 max-w-xl text-base leading-7 text-white/70 md:text-lg">
-                Pick 1–3 faces, spin the prism, and earn Gold when your prediction hits. This is a front-end playtest concept with your uploaded art wired in.
+                Pick 1–3 faces, spin the prism, and stack Gold when your prediction hits. Risk more for bigger rewards.
               </p>
             </div>
 
@@ -1063,10 +1063,9 @@ export default function Page() {
             <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.06),rgba(236,217,186,0.02))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Entry Flow</div>
-                  <div className="mt-1 font-heading text-2xl font-black tracking-tight">Simple. Guided. Fast.</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Birb Game 5</div>
+                  <div className="mt-1 font-heading text-2xl font-black tracking-tight">Select. Spin. Stack.</div>
                 </div>
-                <div className="text-right text-sm text-white/50">Playtest</div>
               </div>
 
               {/* ── Deposit ── */}
