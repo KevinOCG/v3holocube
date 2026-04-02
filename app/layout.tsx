@@ -1,8 +1,6 @@
-"use client";
-
 import "./globals.css";
 import { Pridi, Inter } from 'next/font/google';
-import { TeamProvider } from "../contexts/team-context";
+import { Providers } from "../components/providers";
 
 // Oscine is a custom Moonbirds font - using Inter Black as a fallback
 // To use the actual Oscine font, add the font files to public/fonts/
@@ -20,11 +18,16 @@ const pridi = Pridi({
   display: 'swap',
 });
 
+export const metadata = {
+  title: "Birb Prism Playtest",
+  description: "Premium Birb prism concept",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${pridi.variable}`}>
       <body className="antialiased">
-        <TeamProvider>{children}</TeamProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
