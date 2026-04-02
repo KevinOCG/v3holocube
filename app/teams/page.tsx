@@ -1,7 +1,7 @@
 "use client";
 
 // Teams page - create, join, and manage team competitions
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -12,7 +12,6 @@ import {
   TEAM_INCENTIVES,
   type Team,
 } from "./team-utils";
-import { useTeam } from "../../contexts/team-context";
 
 const cn = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(" ");
@@ -1110,30 +1109,32 @@ function MyTeamPanel({
 // Main Teams Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function TeamsPage() {
-  const { team: userTeam, joinTeam } = useTeam();
+  const [userTeam, setUserTeam] = useState<Team | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
+  // Load team from localStorage on mount
+  useEffect(() => {
+    const savedTeam = localStorage.getItem("birb-team");
+    if (savedTeam) {
+      try {
+        setUserTeam(JSON.parse(savedTeam));
+      } catch (e) {
+        console.error("Failed to parse saved team", e);
+      }
+    }
+  }, []);
+
   const handleTeamCreated = useCallback((team: Team) => {
-    joinTeam({
-      name: team.name,
-      code: team.code,
-      volume: team.totalVolume,
-      rank: team.rank || 99,
-      memberCount: team.members.length,
-    });
-  }, [joinTeam]);
+    setUserTeam(team);
+    localStorage.setItem("birb-team", JSON.stringify(team));
+  }, []);
 
   const handleTeamJoined = useCallback((team: Team) => {
-    joinTeam({
-      name: team.name,
-      code: team.code,
-      volume: team.totalVolume,
-      rank: team.rank || 99,
-      memberCount: team.members.length,
-    });
-  }, [joinTeam]);
+    setUserTeam(team);
+    localStorage.setItem("birb-team", JSON.stringify(team));
+  }, []);
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#090605] text-white">
