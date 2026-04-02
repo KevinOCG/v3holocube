@@ -1,4 +1,5 @@
 "use client";
+// Birb Prism Playtest - Main Game
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -724,6 +725,37 @@ export default function Page() {
   const [totalPlays, setTotalPlays] = useState(10); // Starting with 10 prior plays
   const [totalWins, setTotalWins] = useState(7); // 7 wins out of 10 = 70% WR
 
+  // Team state - loaded from localStorage
+  const [userTeam, setUserTeam] = useState<{ name: string; code: string; totalVolume: number; rank?: number; members: string[] } | null>(null);
+  
+  // Load team from localStorage on mount
+  useEffect(() => {
+    const savedTeam = localStorage.getItem("birb-team");
+    if (savedTeam) {
+      try {
+        setUserTeam(JSON.parse(savedTeam));
+      } catch (e) {
+        console.error("Failed to parse saved team", e);
+      }
+    }
+    // Also listen for storage events to sync across tabs
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "birb-team") {
+        if (e.newValue) {
+          try {
+            setUserTeam(JSON.parse(e.newValue));
+          } catch (err) {
+            console.error("Failed to parse team from storage event", err);
+          }
+        } else {
+          setUserTeam(null);
+        }
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   const animRef = useRef<number | null>(null);
   const rotRef = useRef(0);
 
@@ -877,6 +909,16 @@ export default function Page() {
         if (isHit) {
           setAllTimeGold((prev) => prev + Math.round(depositNum * currentGoldRate));
           setTotalWins((prev) => prev + 1);
+        }
+
+        // Update team volume if user is on a team
+        if (userTeam) {
+          const updatedTeam = {
+            ...userTeam,
+            totalVolume: userTeam.totalVolume + depositNum,
+          };
+          setUserTeam(updatedTeam);
+          localStorage.setItem("birb-team", JSON.stringify(updatedTeam));
         }
 
         setLog((prev) => [
@@ -1061,12 +1103,70 @@ export default function Page() {
 
           <div className="order-1 flex flex-col lg:order-2">
             <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.06),rgba(236,217,186,0.02))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-4 flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Birb Game 5</div>
                   <div className="mt-1 font-heading text-2xl font-black tracking-tight">Select. Spin. Stack.</div>
                 </div>
               </div>
+
+              {/* ── Team Status Bar ── */}
+              {userTeam ? (
+                <div className="mb-5 flex items-center justify-between rounded-xl border border-[#d12429]/20 bg-[#d12429]/5 px-4 py-3">
+                  <a href="/teams" className="flex flex-1 items-center gap-3 transition-opacity hover:opacity-80">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d12429]/20">
+                      <svg className="h-4 w-4 text-[#d12429]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-[#ecd9ba]">{userTeam.name}</div>
+                      <div className="text-xs text-[#ecd9ba]/50">
+                        {userTeam.totalVolume.toLocaleString()} BIRB Volume
+                      </div>
+                    </div>
+                  </a>
+                  <div className="flex items-center gap-2">
+                    {userTeam.rank && userTeam.rank <= 10 && (
+                      <span className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-bold",
+                        userTeam.rank <= 3 ? "bg-amber-500/20 text-amber-400" : "bg-[#d12429]/20 text-[#d12429]"
+                      )}>
+                        #{userTeam.rank}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => {
+                        setUserTeam(null);
+                        localStorage.removeItem("birb-team");
+                      }}
+                      className="rounded-lg border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-2 py-1 text-xs text-[#ecd9ba]/60 transition-colors hover:bg-[#ecd9ba]/10 hover:text-[#ecd9ba]"
+                    >
+                      Leave
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <a
+                  href="/teams"
+                  className="mb-5 flex items-center justify-between rounded-xl border border-[#ecd9ba]/10 bg-[#ecd9ba]/5 px-4 py-3 transition-all hover:bg-[#ecd9ba]/10"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#ecd9ba]/10">
+                      <svg className="h-4 w-4 text-[#ecd9ba]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-[#ecd9ba]">Join a Team</div>
+                      <div className="text-xs text-[#ecd9ba]/50">Compete for Top 10 rewards</div>
+                    </div>
+                  </div>
+                  <svg className="h-4 w-4 text-[#ecd9ba]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              )}
 
               {/* ── Deposit ── */}
               <div className={cn(
