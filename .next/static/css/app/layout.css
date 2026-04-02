@@ -945,6 +945,12 @@ video {
 .-left-14 {
   left: -3.5rem;
 }
+.-right-4 {
+  right: -1rem;
+}
+.bottom-0 {
+  bottom: 0px;
+}
 .bottom-12 {
   bottom: 3rem;
 }
@@ -971,12 +977,6 @@ video {
 }
 .top-3 {
   top: 0.75rem;
-}
-.-right-4 {
-  right: -1rem;
-}
-.bottom-0 {
-  bottom: 0px;
 }
 .z-10 {
   z-index: 10;
@@ -1063,8 +1063,17 @@ video {
 .h-20 {
   height: 5rem;
 }
+.h-24 {
+  height: 6rem;
+}
+.h-28 {
+  height: 7rem;
+}
 .h-3 {
   height: 0.75rem;
+}
+.h-32 {
+  height: 8rem;
 }
 .h-4 {
   height: 1rem;
@@ -1099,18 +1108,6 @@ video {
 .h-full {
   height: 100%;
 }
-.h-5 {
-  height: 1.25rem;
-}
-.h-28 {
-  height: 7rem;
-}
-.h-24 {
-  height: 6rem;
-}
-.h-32 {
-  height: 8rem;
-}
 .min-h-4 {
   min-height: 1rem;
 }
@@ -1123,11 +1120,17 @@ video {
 .w-2 {
   width: 0.5rem;
 }
+.w-24 {
+  width: 6rem;
+}
 .w-28 {
   width: 7rem;
 }
 .w-3 {
   width: 0.75rem;
+}
+.w-32 {
+  width: 8rem;
 }
 .w-4 {
   width: 1rem;
@@ -1161,15 +1164,6 @@ video {
 }
 .w-full {
   width: 100%;
-}
-.w-5 {
-  width: 1.25rem;
-}
-.w-24 {
-  width: 6rem;
-}
-.w-32 {
-  width: 8rem;
 }
 .min-w-\[100px\] {
   min-width: 100px;
@@ -1967,20 +1961,20 @@ video {
 .opacity-95 {
   opacity: 0.95;
 }
-.opacity-60 {
-  opacity: 0.6;
-}
-.opacity-30 {
-  opacity: 0.3;
-}
-.opacity-\[0\.06\] {
-  opacity: 0.06;
+.opacity-\[0\.03\] {
+  opacity: 0.03;
 }
 .opacity-\[0\.04\] {
   opacity: 0.04;
 }
-.opacity-\[0\.03\] {
-  opacity: 0.03;
+.opacity-\[0\.06\] {
+  opacity: 0.06;
+}
+.opacity-\[0\.12\] {
+  opacity: 0.12;
+}
+.opacity-\[0\.08\] {
+  opacity: 0.08;
 }
 .mix-blend-lighten {
   mix-blend-mode: lighten;
@@ -2113,6 +2107,10 @@ video {
 }
 .drop-shadow-\[0_18px_35px_rgba\(0\2c 0\2c 0\2c 0\.42\)\] {
   --tw-drop-shadow: drop-shadow(0 18px 35px rgba(0,0,0,0.42));
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.invert {
+  --tw-invert: invert(100%);
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .saturate-0 {
