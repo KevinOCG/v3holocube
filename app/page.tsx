@@ -991,47 +991,6 @@ export default function Page() {
           </div>
         </header>
 
-        {/* ── Player Stats Bar ── */}
-        <div className="flex flex-wrap items-center justify-center gap-3 border-b border-[#ecd9ba]/10 pb-4 md:gap-6">
-          {/* Daily Streak */}
-          <div className="flex items-center gap-2 rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/5 px-4 py-2">
-            <div className="flex items-center gap-1">
-              {[...Array(7)].map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "h-2 w-2 rounded-full transition-all",
-                    i < dailyStreak
-                      ? "bg-[#ffd700] shadow-[0_0_6px_rgba(255,215,0,0.5)]"
-                      : "bg-[#ecd9ba]/20"
-                  )}
-                />
-              ))}
-            </div>
-            <span className="text-xs font-medium text-[#ffd700]">{dailyStreak} Day Streak</span>
-          </div>
-
-          {/* BIRB Played */}
-          <div className="flex items-center gap-2 rounded-xl border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-4 py-2">
-            <img src="/images/birb-token.png" alt="" className="h-5 w-5" />
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-[#ecd9ba]/50">BIRB Played</span>
-              <span className="text-sm font-bold text-[#ecd9ba]">{totalBirbPlayed.toLocaleString()}</span>
-            </div>
-          </div>
-
-          {/* All Time Gold */}
-          <div className="flex items-center gap-2 rounded-xl border border-[#22c55e]/20 bg-[#22c55e]/5 px-4 py-2">
-            <svg className="h-5 w-5 text-[#ffd700]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-            </svg>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-[#22c55e]/50">All Time Gold</span>
-              <span className="text-sm font-bold text-[#22c55e]">{allTimeGold.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-
         <section className="grid flex-1 gap-10 py-8 lg:grid-cols-2 lg:py-12">
           <div className="order-2 flex flex-col lg:order-1">
             <div className="mb-6 max-w-2xl">
@@ -1325,6 +1284,43 @@ export default function Page() {
 
         {/* ── Outcome and History - Horizontal Section ── */}
         <section className="relative mx-auto w-full max-w-7xl px-0 pb-8">
+          {/* ── Player Stats Bar ── */}
+          <div className="mb-4 flex flex-wrap items-center gap-3 md:gap-4">
+            {/* Daily Streak */}
+            <div className="flex items-center gap-2 rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/5 px-3 py-1.5">
+              <div className="flex items-center gap-0.5">
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all",
+                      i < dailyStreak
+                        ? "bg-[#ffd700] shadow-[0_0_4px_rgba(255,215,0,0.5)]"
+                        : "bg-[#ecd9ba]/20"
+                    )}
+                  />
+                ))}
+              </div>
+              <span className="text-[10px] font-medium text-[#ffd700]">{dailyStreak} Day Streak</span>
+            </div>
+
+            {/* BIRB Played */}
+            <div className="flex items-center gap-2 rounded-xl border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-3 py-1.5">
+              <img src="/images/birb-token.png" alt="" className="h-4 w-4" />
+              <span className="text-[10px] uppercase tracking-wider text-[#ecd9ba]/50">BIRB Played</span>
+              <span className="text-xs font-bold text-[#ecd9ba]">{totalBirbPlayed.toLocaleString()}</span>
+            </div>
+
+            {/* All Time Gold */}
+            <div className="flex items-center gap-2 rounded-xl border border-[#22c55e]/20 bg-[#22c55e]/5 px-3 py-1.5">
+              <svg className="h-4 w-4 text-[#ffd700]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
+              <span className="text-[10px] uppercase tracking-wider text-[#22c55e]/50">All Time Gold</span>
+              <span className="text-xs font-bold text-[#22c55e]">{allTimeGold.toLocaleString()}</span>
+            </div>
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* ── Outcome Panel ── */}
             <AnimatePresence mode="wait">
