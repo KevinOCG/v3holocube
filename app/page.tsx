@@ -815,7 +815,7 @@ export default function Page() {
       
       Face 0 at 0°   → container needs 0° (or 360°)
       Face 1 at 90°  → container needs -90° (or 270°)
-      Face 2 at 180° �� container needs -180° (or 180°)
+      Face 2 at 180° ���� container needs -180° (or 180°)
       Face 3 at 270° → container needs -270° (or 90°)
       
       We normalize to a positive target within the full-spin range.
@@ -947,12 +947,7 @@ export default function Page() {
           </div>
           <div className="hidden items-center gap-3 md:flex">
             {/* Active Team Bar - shows team status or join prompt */}
-            <ActiveTeamBar
-              teamName="Crimson Birb Syndicate"
-              teamVolume={2_450_000}
-              teamRank={3}
-              isInTeam={true}
-            />
+            <ActiveTeamBar />
             {/* Music Controls */}
             <div className="flex items-center gap-2 rounded-full border border-[#ecd9ba]/15 bg-black/20 px-3 py-2 backdrop-blur-md">
               <button

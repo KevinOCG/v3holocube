@@ -3,14 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-
-
-interface ActiveTeamBarProps {
-  teamName?: string;
-  teamVolume?: number;
-  teamRank?: number;
-  isInTeam?: boolean;
-}
+import { useTeam } from "../contexts/team-context";
 
 function formatVolume(volume: number): string {
   if (volume >= 1_000_000) {
@@ -22,15 +15,11 @@ function formatVolume(volume: number): string {
   return volume.toLocaleString();
 }
 
-export function ActiveTeamBar({
-  teamName = "Crimson Birb Syndicate",
-  teamVolume = 2_450_000,
-  teamRank = 3,
-  isInTeam = true,
-}: ActiveTeamBarProps) {
+export function ActiveTeamBar() {
   const [isHovered, setIsHovered] = useState(false);
+  const { team, isInTeam } = useTeam();
 
-  if (!isInTeam) {
+  if (!isInTeam || !team) {
     // User NOT in a team - show "Join a Team" variant
     return (
       <Link
@@ -87,6 +76,8 @@ export function ActiveTeamBar({
   }
 
   // User IS in a team - show full team status
+  const { name: teamName, volume: teamVolume, rank: teamRank } = team;
+
   return (
     <Link
       href="/teams"

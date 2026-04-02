@@ -11,6 +11,7 @@ import {
   TEAM_INCENTIVES,
   type Team,
 } from "./team-utils";
+import { useTeam } from "../../contexts/team-context";
 
 const cn = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(" ");
@@ -1108,18 +1109,30 @@ function MyTeamPanel({
 // Main Teams Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function TeamsPage() {
-  const [userTeam, setUserTeam] = useState<Team | null>(null);
+  const { team: userTeam, joinTeam } = useTeam();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
   const handleTeamCreated = useCallback((team: Team) => {
-    setUserTeam(team);
-  }, []);
+    joinTeam({
+      name: team.name,
+      code: team.code,
+      volume: team.volume,
+      rank: team.rank,
+      memberCount: team.memberCount,
+    });
+  }, [joinTeam]);
 
   const handleTeamJoined = useCallback((team: Team) => {
-    setUserTeam(team);
-  }, []);
+    joinTeam({
+      name: team.name,
+      code: team.code,
+      volume: team.volume,
+      rank: team.rank,
+      memberCount: team.memberCount,
+    });
+  }, [joinTeam]);
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#090605] text-white">
