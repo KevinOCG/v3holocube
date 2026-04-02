@@ -213,6 +213,220 @@ type LogEntry = {
   deposit: number;
 };
 
+/* ── Share Modal Component ── */
+function ShareModal({ 
+  isOpen, 
+  onClose, 
+  birbDeposit, 
+  goldEarned, 
+  riskLevel 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  birbDeposit: number; 
+  goldEarned: number;
+  riskLevel: "High" | "Medium" | "Low";
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [copying, setCopying] = useState(false);
+
+  const riskColors = {
+    High: { bg: "from-[#ffd700] to-[#ff8c00]", text: "text-[#ffd700]", label: "HIGH RISK" },
+    Medium: { bg: "from-[#22c55e] to-[#16a34a]", text: "text-[#22c55e]", label: "MEDIUM RISK" },
+    Low: { bg: "from-[#22c55e] to-[#15803d]", text: "text-[#22c55e]", label: "LOW RISK" },
+  };
+
+  const shareToTwitter = () => {
+    const text = `Birbish AF! I just earned ${goldEarned.toLocaleString()} Gold on a ${riskLevel} Risk spin with ${birbDeposit.toLocaleString()} BIRB!`;
+    const url = window.location.href;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(twitterUrl, '_blank', 'width=550,height=420');
+  };
+
+  const downloadImage = async () => {
+    if (!cardRef.current) return;
+    setCopying(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#0a0604',
+        scale: 2,
+      });
+      const link = document.createElement('a');
+      link.download = 'birbish-win.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Failed to generate image:', err);
+    }
+    setCopying(false);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="relative z-10 w-full max-w-md"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1210] text-white/60 hover:text-white transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        {/* Shareable Card */}
+        <div
+          ref={cardRef}
+          className="overflow-hidden rounded-3xl border border-[#ffd700]/20 bg-black"
+        >
+          {/* Header with gold owl background */}
+          <div className="relative px-8 pt-8 pb-6">
+            {/* Gold owl background image */}
+            <img 
+              src="/images/birb-gold.jpg" 
+              alt="" 
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
+            />
+            <div className="relative z-10">
+              <div className={cn(
+                "inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider",
+                `bg-gradient-to-r ${riskColors[riskLevel].bg} text-black`
+              )}>
+                {riskColors[riskLevel].label}
+              </div>
+              <h2 className="mt-4 font-heading text-5xl font-black tracking-tight text-white">
+                Birbish AF
+              </h2>
+              <p className="mt-1 text-lg text-white/60">I struck GOLD on birb game</p>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="border-t border-[#ffd700]/10 bg-black px-8 py-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <div className="text-xs uppercase tracking-widest text-white/40">BIRB Deposited</div>
+                <div className="mt-1 font-heading text-3xl font-bold text-white">
+                  {birbDeposit.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-widest text-white/40">Gold Earned</div>
+                <div className={cn(
+                  "mt-1 font-heading text-3xl font-bold",
+                  riskLevel === "High" 
+                    ? "bg-gradient-to-r from-[#ffd700] via-[#ffec8b] to-[#ffd700] bg-clip-text text-transparent"
+                    : "text-[#22c55e]"
+                )}>
+                  +{goldEarned.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={downloadImage}
+            disabled={copying}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#f0dcc6]/20 bg-[#1a1210] px-4 py-3 text-sm font-medium text-white/80 transition-colors hover:bg-[#2a1f1a] hover:text-white disabled:opacity-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            {copying ? "Saving..." : "Save Image"}
+          </button>
+          <button
+            onClick={shareToTwitter}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1d9bf0] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#1a8cd8]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            Share on X
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ── Token Rain Animation for Legendary Wins ── */
+function TokenRain({ isActive }: { isActive: boolean }) {
+  const tokens = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 3 + Math.random() * 2,
+      size: 24 + Math.random() * 24,
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 720,
+    }));
+  }, []);
+
+  if (!isActive) return null;
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
+      {tokens.map((token) => (
+        <motion.div
+          key={token.id}
+          initial={{ 
+            y: -100, 
+            x: `${token.left}vw`,
+            rotate: token.rotation,
+            opacity: 0 
+          }}
+          animate={{ 
+            y: '110vh',
+            rotate: token.rotation + token.rotationSpeed,
+            opacity: [0, 0.9, 0.9, 0]
+          }}
+          transition={{
+            duration: token.duration,
+            delay: token.delay,
+            ease: 'linear',
+            repeat: Infinity,
+            repeatDelay: Math.random() * 2,
+          }}
+          className="absolute"
+          style={{ 
+            left: 0,
+            width: token.size,
+            height: token.size,
+          }}
+        >
+          <img 
+            src="/images/birb-token.png" 
+            alt="" 
+            className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(255,200,100,0.5)]"
+          />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Gold Rate Decay: day 1 = peak, day 28 = floor ── */
 function getBaseGoldMultiplier(day: number): number {
   const floor = 0.35;
@@ -501,6 +715,14 @@ export default function Page() {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [currentDay, setCurrentDay] = useState(1);
   const [depositPhase, setDepositPhase] = useState<DepositPhase>("deposit");
+  const [showShareModal, setShowShareModal] = useState(false);
+  
+  // Lifetime stats (starting values for POC)
+  const [totalBirbPlayed, setTotalBirbPlayed] = useState(15478);
+  const [allTimeGold, setAllTimeGold] = useState(28814);
+  const [dailyStreak, setDailyStreak] = useState(3); // Starting at day 3 for POC
+  const [totalPlays, setTotalPlays] = useState(10); // Starting with 10 prior plays
+  const [totalWins, setTotalWins] = useState(7); // 7 wins out of 10 = 70% WR
 
   const animRef = useRef<number | null>(null);
   const rotRef = useRef(0);
@@ -649,6 +871,14 @@ export default function Page() {
           ? (depositNum * currentGoldRate).toFixed(0)
           : "0";
 
+        // Update lifetime stats
+        setTotalBirbPlayed((prev) => prev + depositNum);
+        setTotalPlays((prev) => prev + 1);
+        if (isHit) {
+          setAllTimeGold((prev) => prev + Math.round(depositNum * currentGoldRate));
+          setTotalWins((prev) => prev + 1);
+        }
+
         setLog((prev) => [
           ...prev,
           {
@@ -701,6 +931,9 @@ export default function Page() {
 
       {/* ── Toobins art elements ── */}
       <img src="/toobins-r.png" alt="" className="pointer-events-none fixed right-0 top-0 h-auto w-[28rem] object-contain opacity-20 mix-blend-lighten lg:opacity-30" />
+
+      {/* ── Token Rain for Legendary Wins ── */}
+      <TokenRain isActive={result === "hit" && selected.length === 1 && spinPhase === "done"} />
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-6 md:px-10">
         <header className="flex items-center justify-between gap-4">
@@ -766,7 +999,7 @@ export default function Page() {
           <div className="order-2 flex flex-col lg:order-1">
             <div className="mb-6 max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#d12429]/30 bg-[#d12429]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ecd9ba]/80">
-                Premium playtest concept
+                Birb Game 5
               </div>
               <h1 className="font-heading text-4xl font-black leading-[0.95] tracking-tight md:text-6xl">
                 Predict the landing.
@@ -775,7 +1008,7 @@ export default function Page() {
                 </span>
               </h1>
               <p className="mt-4 max-w-xl text-base leading-7 text-white/70 md:text-lg">
-                Pick 1–3 faces, spin the prism, and earn Gold when your prediction hits. This is a front-end playtest concept with your uploaded art wired in.
+                Pick 1–3 faces, spin the prism, and stack Gold when your prediction hits. Risk more for bigger rewards.
               </p>
             </div>
 
@@ -830,10 +1063,9 @@ export default function Page() {
             <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.06),rgba(236,217,186,0.02))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Entry Flow</div>
-                  <div className="mt-1 font-heading text-2xl font-black tracking-tight">Simple. Guided. Fast.</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Birb Game 5</div>
+                  <div className="mt-1 font-heading text-2xl font-black tracking-tight">Select. Spin. Stack.</div>
                 </div>
-                <div className="text-right text-sm text-white/50">Playtest</div>
               </div>
 
               {/* ── Deposit ── */}
@@ -1088,7 +1320,13 @@ export default function Page() {
                           : "bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.18),transparent_60%)]"
                     )}
                   />
-                  <div className="relative">
+                  {/* Decorative owl logo watermark on right */}
+                  <img 
+                    src="/images/birblogo-transparent.png" 
+                    alt="" 
+                    className="pointer-events-none absolute right-4 top-1/2 h-28 w-auto -translate-y-1/2 object-contain opacity-50 md:h-36"
+                  />
+                  <div className="relative z-10">
                     <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
                     <div className={cn(
                       "mt-2 font-heading text-3xl font-black md:text-4xl",
@@ -1112,6 +1350,27 @@ export default function Page() {
                       )}
                     </div>
                   </div>
+                  {/* Share button - only on hits, positioned absolutely */}
+                  {result === "hit" && (
+                    <button
+                      onClick={() => setShowShareModal(true)}
+                      className={cn(
+                        "absolute bottom-5 right-5 flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors",
+                        selected.length === 1
+                          ? "border-[#ffd700]/30 bg-[#ffd700]/10 text-[#ffd700] hover:bg-[#ffd700]/20"
+                          : "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20"
+                      )}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                      </svg>
+                      Share
+                    </button>
+                  )}
                 </motion.div>
               ) : (
                 <motion.div
@@ -1129,9 +1388,64 @@ export default function Page() {
               )}
             </AnimatePresence>
 
-            {/* ── History Panel ── */}
-            <div className="rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
-              <div className="mb-4 flex items-center justify-between">
+            {/* ── Right Column: Stats + History ── */}
+            <div className="flex flex-col gap-4">
+              {/* ── Player Stats Bar ── */}
+              <div className="flex items-center justify-center gap-2">
+                {/* Daily Streak */}
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/5 px-2.5 py-1.5">
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(7)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full transition-all",
+                          i < dailyStreak
+                            ? "bg-[#ffd700] shadow-[0_0_4px_rgba(255,215,0,0.5)]"
+                            : "bg-[#ecd9ba]/20"
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-medium text-[#ffd700]">{dailyStreak} Day Streak</span>
+                </div>
+
+                {/* BIRB Played */}
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-2.5 py-1.5">
+                  <img src="/images/birb-token.png" alt="" className="h-4 w-4" />
+                  <span className="text-[10px] uppercase tracking-wider text-[#ecd9ba]/50">BIRB Played</span>
+                  <span className="text-xs font-bold text-[#ecd9ba]">{totalBirbPlayed.toLocaleString()}</span>
+                </div>
+
+                {/* All Time Gold */}
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#22c55e]/20 bg-[#22c55e]/5 px-2.5 py-1.5">
+                  <svg className="h-4 w-4 text-[#ffd700]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                  </svg>
+                  <span className="text-[10px] uppercase tracking-wider text-[#22c55e]/50">All Time Gold</span>
+                  <span className="text-xs font-bold text-[#22c55e]">{allTimeGold.toLocaleString()}</span>
+                </div>
+
+                {/* Win Rate */}
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#8b5cf6]/20 bg-[#8b5cf6]/5 px-2.5 py-1.5">
+                  <svg className="h-4 w-4 text-[#8b5cf6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                    <polyline points="16 7 22 7 22 13" />
+                  </svg>
+                  <span className="text-[10px] uppercase tracking-wider text-[#8b5cf6]/50">WR</span>
+                  <span className="text-xs font-bold text-[#8b5cf6]">{Math.round((totalWins / totalPlays) * 100)}%</span>
+                </div>
+              </div>
+
+              {/* ── History Panel ── */}
+              <div className="relative flex-1 overflow-hidden rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
+              {/* Decorative owl logo watermark */}
+              <img 
+                src="/images/birblogo-transparent.png" 
+                alt="" 
+                className="pointer-events-none absolute -right-4 bottom-0 h-32 w-auto object-contain opacity-25"
+              />
+              <div className="relative z-10 mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
                   {log.length > 0 && (
@@ -1196,10 +1510,24 @@ export default function Page() {
                   )}
                 </div>
               )}
+              </div>
             </div>
           </div>
         </section>
       </div>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && result === "hit" && (
+          <ShareModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            birbDeposit={depositNum}
+            goldEarned={Math.round(depositNum * getGoldRateNum(selected.length, dayMultiplier))}
+            riskLevel={selected.length === 1 ? "High" : selected.length === 2 ? "Medium" : "Low"}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
