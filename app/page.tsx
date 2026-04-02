@@ -293,14 +293,15 @@ function ShareModal({
         {/* Shareable Card */}
         <div
           ref={cardRef}
-          className="overflow-hidden rounded-3xl border border-[#f0dcc6]/20 bg-gradient-to-b from-[#1a1210] to-[#0a0604]"
+          className="overflow-hidden rounded-3xl border border-[#ffd700]/20 bg-black"
         >
-          {/* Header with logo watermark */}
+          {/* Header with gold owl background */}
           <div className="relative px-8 pt-8 pb-6">
+            {/* Gold owl background image */}
             <img 
-              src="/images/birblogo-transparent.png" 
+              src="/images/birb-gold.jpg" 
               alt="" 
-              className="pointer-events-none absolute right-4 top-4 h-24 w-auto object-contain opacity-40"
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
             />
             <div className="relative z-10">
               <div className={cn(
@@ -312,12 +313,12 @@ function ShareModal({
               <h2 className="mt-4 font-heading text-5xl font-black tracking-tight text-white">
                 Birbish AF
               </h2>
-              <p className="mt-1 text-lg text-white/60">Gold earned on the Prism</p>
+              <p className="mt-1 text-lg text-white/60">I struck GOLD on birb game</p>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="border-t border-[#f0dcc6]/10 bg-black/30 px-8 py-6">
+          <div className="border-t border-[#ffd700]/10 bg-black px-8 py-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <div className="text-xs uppercase tracking-widest text-white/40">BIRB Deposited</div>
@@ -337,16 +338,6 @@ function ShareModal({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Footer branding */}
-          <div className="flex items-center justify-center gap-2 border-t border-[#f0dcc6]/10 bg-black/20 px-8 py-4">
-            <img 
-              src="/images/birblogo.png" 
-              alt="Birb" 
-              className="h-5 w-5 opacity-60"
-            />
-            <span className="text-sm text-white/40">birb.gg</span>
           </div>
         </div>
 
