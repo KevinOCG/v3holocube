@@ -1554,6 +1554,12 @@ video {
 .bg-yellow-500\/5 {
   background-color: rgb(234 179 8 / 0.05);
 }
+.bg-\[\#d12429\]\/20 {
+  background-color: rgb(209 36 41 / 0.2);
+}
+.bg-amber-500\/20 {
+  background-color: rgb(245 158 11 / 0.2);
+}
 .bg-\[linear-gradient\(135deg\2c \#7d050d\2c \#d12429\)\] {
   background-image: linear-gradient(135deg,#7d050d,#d12429);
 }
@@ -2130,6 +2136,13 @@ video {
   --tw-text-opacity: 1;
   color: rgb(250 204 21 / var(--tw-text-opacity, 1));
 }
+.text-\[\#ecd9ba\]\/60 {
+  color: rgb(236 217 186 / 0.6);
+}
+.text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
+}
 .antialiased {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -2468,6 +2481,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 .hover\:bg-white\/\[0\.06\]:hover {
   background-color: rgb(255 255 255 / 0.06);
+}
+
+.hover\:bg-\[\#d12429\]\/10:hover {
+  background-color: rgb(209 36 41 / 0.1);
 }
 
 .hover\:text-\[\#ecd9ba\]\/70:hover {
