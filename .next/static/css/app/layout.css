@@ -1976,6 +1976,12 @@ video {
 .opacity-\[0\.08\] {
   opacity: 0.08;
 }
+.opacity-25 {
+  opacity: 0.25;
+}
+.opacity-30 {
+  opacity: 0.3;
+}
 .mix-blend-lighten {
   mix-blend-mode: lighten;
 }
