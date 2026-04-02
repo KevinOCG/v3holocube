@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+
 
 interface ActiveTeamBarProps {
   teamName?: string;
@@ -158,14 +158,13 @@ export function ActiveTeamBar({
             <>
               <span className="text-[#ecd9ba]/20">|</span>
               <span
-                className={cn(
-                  "text-[10px] font-medium",
+                className={`text-[10px] font-medium ${
                   teamRank <= 3
                     ? "text-amber-400"
                     : teamRank <= 10
                       ? "text-[#d12429]"
                       : "text-[#ecd9ba]/60"
-                )}
+                }`}
               >
                 Rank #{teamRank}
               </span>
