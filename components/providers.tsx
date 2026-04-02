@@ -1,4 +1,5 @@
 "use client";
+// Providers wrapper - v2
 
 import { TeamProvider } from "../contexts/team-context";
 

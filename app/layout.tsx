@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Pridi, Inter } from "next/font/google";
-import { Providers } from "../components/providers";
+import { Providers } from "../components/providers"; // v2
 
 // Oscine is a custom Moonbirds font - using Inter Black as a fallback
 // To use the actual Oscine font, add the font files to public/fonts/

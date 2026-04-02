@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ActiveTeamBar } from "../components/active-team-bar";
+import { ActiveTeamBar } from "../components/active-team-bar"; // v2
 
 /* ── Lofi Music System ── */
 function useLofiMusic() {
