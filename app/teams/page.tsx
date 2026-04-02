@@ -1118,9 +1118,9 @@ export default function TeamsPage() {
     joinTeam({
       name: team.name,
       code: team.code,
-      volume: team.volume,
-      rank: team.rank,
-      memberCount: team.memberCount,
+      volume: team.totalVolume,
+      rank: team.rank || 99,
+      memberCount: team.members.length,
     });
   }, [joinTeam]);
 
@@ -1128,9 +1128,9 @@ export default function TeamsPage() {
     joinTeam({
       name: team.name,
       code: team.code,
-      volume: team.volume,
-      rank: team.rank,
-      memberCount: team.memberCount,
+      volume: team.totalVolume,
+      rank: team.rank || 99,
+      memberCount: team.members.length,
     });
   }, [joinTeam]);
 

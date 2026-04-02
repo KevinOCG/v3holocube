@@ -815,7 +815,7 @@ export default function Page() {
       
       Face 0 at 0°   → container needs 0° (or 360°)
       Face 1 at 90°  → container needs -90° (or 270°)
-      Face 2 at 180° ���� container needs -180° (or 180°)
+      Face 2 at 180° ������ container needs -180° (or 180°)
       Face 3 at 270° → container needs -270° (or 90°)
       
       We normalize to a positive target within the full-spin range.
@@ -946,8 +946,6 @@ export default function Page() {
             </div>
           </div>
           <div className="hidden items-center gap-3 md:flex">
-            {/* Active Team Bar - shows team status or join prompt */}
-            <ActiveTeamBar />
             {/* Music Controls */}
             <div className="flex items-center gap-2 rounded-full border border-[#ecd9ba]/15 bg-black/20 px-3 py-2 backdrop-blur-md">
               <button
@@ -1065,11 +1063,16 @@ export default function Page() {
 
           <div className="order-1 flex flex-col lg:order-2">
             <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.06),rgba(236,217,186,0.02))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-4 flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Birb Game 5</div>
                   <div className="mt-1 font-heading text-2xl font-black tracking-tight">Select. Spin. Stack.</div>
                 </div>
+              </div>
+
+              {/* ── Team Status Bar ── */}
+              <div className="mb-5">
+                <ActiveTeamBar />
               </div>
 
               {/* ── Deposit ── */}
