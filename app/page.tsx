@@ -721,6 +721,8 @@ export default function Page() {
   const [totalBirbPlayed, setTotalBirbPlayed] = useState(15478);
   const [allTimeGold, setAllTimeGold] = useState(28814);
   const [dailyStreak, setDailyStreak] = useState(3); // Starting at day 3 for POC
+  const [totalPlays, setTotalPlays] = useState(10); // Starting with 10 prior plays
+  const [totalWins, setTotalWins] = useState(7); // 7 wins out of 10 = 70% WR
 
   const animRef = useRef<number | null>(null);
   const rotRef = useRef(0);
@@ -871,8 +873,10 @@ export default function Page() {
 
         // Update lifetime stats
         setTotalBirbPlayed((prev) => prev + depositNum);
+        setTotalPlays((prev) => prev + 1);
         if (isHit) {
           setAllTimeGold((prev) => prev + Math.round(depositNum * currentGoldRate));
+          setTotalWins((prev) => prev + 1);
         }
 
         setLog((prev) => [
@@ -1421,6 +1425,16 @@ export default function Page() {
                   </svg>
                   <span className="text-[10px] uppercase tracking-wider text-[#22c55e]/50">All Time Gold</span>
                   <span className="text-xs font-bold text-[#22c55e]">{allTimeGold.toLocaleString()}</span>
+                </div>
+
+                {/* Win Rate */}
+                <div className="flex items-center gap-2 rounded-xl border border-[#8b5cf6]/20 bg-[#8b5cf6]/5 px-3 py-1.5">
+                  <svg className="h-4 w-4 text-[#8b5cf6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                    <polyline points="16 7 22 7 22 13" />
+                  </svg>
+                  <span className="text-[10px] uppercase tracking-wider text-[#8b5cf6]/50">WR</span>
+                  <span className="text-xs font-bold text-[#8b5cf6]">{Math.round((totalWins / totalPlays) * 100)}%</span>
                 </div>
               </div>
 

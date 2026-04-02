@@ -1444,6 +1444,9 @@ video {
 .border-\[\#ecd9ba\]\/20 {
   border-color: rgb(236 217 186 / 0.2);
 }
+.border-\[\#8b5cf6\]\/20 {
+  border-color: rgb(139 92 246 / 0.2);
+}
 .border-t-transparent {
   border-top-color: transparent;
 }
@@ -1575,6 +1578,9 @@ video {
 }
 .bg-\[\#ffd700\]\/5 {
   background-color: rgb(255 215 0 / 0.05);
+}
+.bg-\[\#8b5cf6\]\/5 {
+  background-color: rgb(139 92 246 / 0.05);
 }
 .bg-\[linear-gradient\(135deg\2c \#7d050d\2c \#d12429\)\] {
   background-image: linear-gradient(135deg,#7d050d,#d12429);
@@ -2105,6 +2111,13 @@ video {
 }
 .text-\[\#22c55e\]\/50 {
   color: rgb(34 197 94 / 0.5);
+}
+.text-\[\#8b5cf6\] {
+  --tw-text-opacity: 1;
+  color: rgb(139 92 246 / var(--tw-text-opacity, 1));
+}
+.text-\[\#8b5cf6\]\/50 {
+  color: rgb(139 92 246 / 0.5);
 }
 .antialiased {
   -webkit-font-smoothing: antialiased;
