@@ -1,3 +1,4 @@
+// Root Layout
 import "./globals.css";
 import { Pridi, Inter } from "next/font/google";
 
