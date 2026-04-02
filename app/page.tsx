@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { ActiveTeamBar } from "../components/active-team-bar";
+import { ActiveTeamBar } from "../components/active-team-bar"; // Team status bar
 
 /* ── Lofi Music System ── */
 function useLofiMusic() {
@@ -815,7 +815,7 @@ export default function Page() {
       
       Face 0 at 0°   → container needs 0° (or 360°)
       Face 1 at 90°  → container needs -90° (or 270°)
-      Face 2 at 180° ������ container needs -180° (or 180°)
+      Face 2 at 180° �������� container needs -180° (or 180°)
       Face 3 at 270° → container needs -270° (or 90°)
       
       We normalize to a positive target within the full-spin range.

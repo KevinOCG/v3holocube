@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTeam } from "../contexts/team-context";
 
-// Team bar component - displays team status in the right panel
+// Team bar component - displays current team status in the right panel
 
 function formatVolume(volume: number): string {
   if (volume >= 1_000_000) {
