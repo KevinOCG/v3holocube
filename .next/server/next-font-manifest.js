@@ -1,1 +1,1 @@
-self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/vercel/share/v0-project/app/layout\":[\"static/media/e4af272ccee01ff0-s.p.woff2\",\"static/media/523737ea26430243-s.p.woff2\",\"static/media/ca86d732da0b2559-s.p.woff2\",\"static/media/f65831ce3ab17dbd-s.p.woff2\",\"static/media/951619881ef6d356-s.p.woff2\",\"static/media/fc9fb446d3d2508e-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{},\"appUsingSizeAdjust\":false,\"pagesUsingSizeAdjust\":false}"
