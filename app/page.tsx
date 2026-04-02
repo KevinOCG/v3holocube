@@ -370,6 +370,63 @@ function ShareModal({
   );
 }
 
+/* ── Token Rain Animation for Legendary Wins ── */
+function TokenRain({ isActive }: { isActive: boolean }) {
+  const tokens = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 3 + Math.random() * 2,
+      size: 24 + Math.random() * 24,
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 720,
+    }));
+  }, []);
+
+  if (!isActive) return null;
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
+      {tokens.map((token) => (
+        <motion.div
+          key={token.id}
+          initial={{ 
+            y: -100, 
+            x: `${token.left}vw`,
+            rotate: token.rotation,
+            opacity: 0 
+          }}
+          animate={{ 
+            y: '110vh',
+            rotate: token.rotation + token.rotationSpeed,
+            opacity: [0, 0.9, 0.9, 0]
+          }}
+          transition={{
+            duration: token.duration,
+            delay: token.delay,
+            ease: 'linear',
+            repeat: Infinity,
+            repeatDelay: Math.random() * 2,
+          }}
+          className="absolute"
+          style={{ 
+            left: 0,
+            width: token.size,
+            height: token.size,
+          }}
+        >
+          <img 
+            src="/images/birb-token.png" 
+            alt="" 
+            className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(255,200,100,0.5)]"
+          />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Gold Rate Decay: day 1 = peak, day 28 = floor ── */
 function getBaseGoldMultiplier(day: number): number {
   const floor = 0.35;
@@ -859,6 +916,9 @@ export default function Page() {
 
       {/* ── Toobins art elements ── */}
       <img src="/toobins-r.png" alt="" className="pointer-events-none fixed right-0 top-0 h-auto w-[28rem] object-contain opacity-20 mix-blend-lighten lg:opacity-30" />
+
+      {/* ── Token Rain for Legendary Wins ── */}
+      <TokenRain isActive={result === "hit" && selected.length === 1 && spinPhase === "done"} />
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-6 md:px-10">
         <header className="flex items-center justify-between gap-4">
