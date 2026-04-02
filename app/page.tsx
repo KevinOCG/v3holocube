@@ -1088,15 +1088,14 @@ export default function Page() {
                           : "bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.18),transparent_60%)]"
                     )}
                   />
-                  <div className="relative">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src="/images/birblogo.png" 
-                        alt="Birb" 
-                        className="h-5 w-5 opacity-60"
-                      />
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
-                    </div>
+                  {/* Decorative owl logo watermark on right */}
+                  <img 
+                    src="/images/birblogo-transparent.png" 
+                    alt="" 
+                    className="pointer-events-none absolute right-4 top-1/2 h-28 w-28 -translate-y-1/2 opacity-[0.06] md:h-36 md:w-36"
+                  />
+                  <div className="relative z-10">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
                     <div className={cn(
                       "mt-2 font-heading text-3xl font-black md:text-4xl",
                       result === "hit" && selected.length === 1
@@ -1126,17 +1125,16 @@ export default function Page() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex items-center justify-center rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-6"
+                  className="relative flex items-center justify-center overflow-hidden rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-6"
                 >
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <img 
-                        src="/images/birblogo.png" 
-                        alt="Birb" 
-                        className="h-5 w-5 opacity-30"
-                      />
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
-                    </div>
+                  {/* Decorative owl logo watermark on right */}
+                  <img 
+                    src="/images/birblogo-transparent.png" 
+                    alt="" 
+                    className="pointer-events-none absolute right-4 top-1/2 h-24 w-24 -translate-y-1/2 opacity-[0.04]"
+                  />
+                  <div className="relative z-10 text-center">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
                     <div className="mt-2 text-sm text-white/20">Spin to see results</div>
                   </div>
                 </motion.div>
@@ -1144,17 +1142,16 @@ export default function Page() {
             </AnimatePresence>
 
             {/* ── History Panel ── */}
-            <div className="rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
-              <div className="mb-4 flex items-center justify-between">
+            <div className="relative overflow-hidden rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
+              {/* Decorative owl logo watermark */}
+              <img 
+                src="/images/birblogo-transparent.png" 
+                alt="" 
+                className="pointer-events-none absolute -right-4 bottom-0 h-32 w-32 opacity-[0.03]"
+              />
+              <div className="relative z-10 mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src="/images/birblogo.png" 
-                      alt="Birb" 
-                      className="h-4 w-4 opacity-40"
-                    />
-                    <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
-                  </div>
+                  <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
                   {log.length > 0 && (
                     <div className="flex items-center gap-2 text-sm font-bold">
                       <span className="text-[#ecd9ba]">{log.filter((l) => l.result === "hit").length}W</span>
