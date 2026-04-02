@@ -1092,7 +1092,7 @@ export default function Page() {
                   <img 
                     src="/images/birblogo-transparent.png" 
                     alt="" 
-                    className="pointer-events-none absolute right-4 top-1/2 h-28 w-28 -translate-y-1/2 opacity-50 md:h-36 md:w-36"
+                    className="pointer-events-none absolute right-4 top-1/2 h-28 w-auto -translate-y-1/2 object-contain opacity-50 md:h-36"
                   />
                   <div className="relative z-10">
                     <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
@@ -1131,7 +1131,7 @@ export default function Page() {
                   <img 
                     src="/images/birblogo-transparent.png" 
                     alt="" 
-                    className="pointer-events-none absolute right-4 top-1/2 h-24 w-24 -translate-y-1/2 opacity-30"
+                    className="pointer-events-none absolute right-4 top-1/2 h-24 w-auto -translate-y-1/2 object-contain opacity-30"
                   />
                   <div className="relative z-10 text-center">
                     <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
@@ -1147,7 +1147,7 @@ export default function Page() {
               <img 
                 src="/images/birblogo-transparent.png" 
                 alt="" 
-                className="pointer-events-none absolute -right-4 bottom-0 h-32 w-32 opacity-25"
+                className="pointer-events-none absolute -right-4 bottom-0 h-32 w-auto object-contain opacity-25"
               />
               <div className="relative z-10 mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
