@@ -1,7 +1,6 @@
 const fs = require('fs');
-const path = require('path');
 
-const filePath = path.join(__dirname, '..', 'app', 'page.tsx');
+const filePath = '/vercel/share/v0-project/app/page.tsx';
 let content = fs.readFileSync(filePath, 'utf8');
 
 // Split into lines
