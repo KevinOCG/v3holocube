@@ -1,9 +1,8 @@
-FILE_CONTENT_START
-
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ActiveTeamBar } from "../components/active-team-bar";
 
 /* ── Lofi Music System ── */
 function useLofiMusic() {
@@ -852,8 +851,7 @@ export default function Page() {
       }
 
       if (t < 1) {
-        animRef.cu
-rrent = requestAnimationFrame(animate);
+        animRef.current = requestAnimationFrame(animate);
       } else {
         rotRef.current = finalTarget;
         setRotationDeg(finalTarget);
@@ -1064,14 +1062,19 @@ rrent = requestAnimationFrame(animate);
 
           <div className="order-1 flex flex-col lg:order-2">
             <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.06),rgba(236,217,186,0.02))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Birb Game 5</div>
-                  <div className="mt-1 font-heading text-2xl font-black tracking-tight">Select. Spin. Stack.</div>
-                </div>
-              </div>
-
-              {/* ── Deposit ── */}
+<div className="mb-4 flex items-center justify-between">
+  <div>
+  <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Birb Game 5</div>
+  <div className="mt-1 font-heading text-2xl font-black tracking-tight">Select. Spin. Stack.</div>
+  </div>
+  </div>
+  
+  {/* ── Team Status Bar ── */}
+  <div className="mb-5">
+    <ActiveTeamBar />
+  </div>
+  
+  {/* ── Deposit ── */}
               <div className={cn(
                 "rounded-[1.6rem] border p-4 shadow-[inset_0_1px_0_rgba(255,245,234,0.04)] transition-colors duration-500",
                 depositPhase === "ready"
@@ -1436,8 +1439,7 @@ rrent = requestAnimationFrame(animate);
                     <polyline points="16 7 22 7 22 13" />
                   </svg>
                   <span className="text-[10px] uppercase tracking-wider text-[#8b5cf6]/50">WR</span>
-                  <span className="text-xs font-bold text-[#8b5cf6]">{Math.round((totalWins / totalPlays) * 1
-00)}%</span>
+                  <span className="text-xs font-bold text-[#8b5cf6]">{Math.round((totalWins / totalPlays) * 100)}%</span>
                 </div>
               </div>
 
@@ -1535,8 +1537,3 @@ rrent = requestAnimationFrame(animate);
     </div>
   );
 }
-
-
-FILE_CONTENT_END
-Length: [33m69944[39m
-
