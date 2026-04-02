@@ -1,5 +1,6 @@
 "use client";
 
+// Teams page - create, join, and manage team competitions
 import React, { useState, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
