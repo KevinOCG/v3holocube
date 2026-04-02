@@ -911,6 +911,16 @@ export default function Page() {
           setTotalWins((prev) => prev + 1);
         }
 
+        // Update team volume if user is on a team
+        if (userTeam) {
+          const updatedTeam = {
+            ...userTeam,
+            totalVolume: userTeam.totalVolume + depositNum,
+          };
+          setUserTeam(updatedTeam);
+          localStorage.setItem("birb-team", JSON.stringify(updatedTeam));
+        }
+
         setLog((prev) => [
           ...prev,
           {
