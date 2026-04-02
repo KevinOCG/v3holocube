@@ -2500,6 +2500,15 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   color: rgb(255 255 255 / 0.9);
 }
 
+.hover\:text-\[\#ecd9ba\]:hover {
+  --tw-text-opacity: 1;
+  color: rgb(236 217 186 / var(--tw-text-opacity, 1));
+}
+
+.hover\:opacity-80:hover {
+  opacity: 0.8;
+}
+
 .hover\:brightness-110:hover {
   --tw-brightness: brightness(1.1);
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
