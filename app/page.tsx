@@ -1125,15 +1125,9 @@ export default function Page() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="relative flex items-center justify-center overflow-hidden rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-6"
+                  className="flex items-center justify-center rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-6"
                 >
-                  {/* Decorative owl logo watermark on right */}
-                  <img 
-                    src="/images/birblogo-transparent.png" 
-                    alt="" 
-                    className="pointer-events-none absolute right-4 top-1/2 h-24 w-auto -translate-y-1/2 object-contain opacity-30"
-                  />
-                  <div className="relative z-10 text-center">
+                  <div className="text-center">
                     <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
                     <div className="mt-2 text-sm text-white/20">Spin to see results</div>
                   </div>
