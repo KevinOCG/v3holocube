@@ -1392,9 +1392,9 @@ export default function Page() {
             {/* ── Right Column: Stats + History ── */}
             <div className="flex flex-col gap-4">
               {/* ── Player Stats Bar ── */}
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="flex items-center justify-center gap-2">
                 {/* Daily Streak */}
-                <div className="flex items-center gap-2 rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/5 px-3 py-1.5">
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/5 px-2.5 py-1.5">
                   <div className="flex items-center gap-0.5">
                     {[...Array(7)].map((_, i) => (
                       <div
@@ -1412,14 +1412,14 @@ export default function Page() {
                 </div>
 
                 {/* BIRB Played */}
-                <div className="flex items-center gap-2 rounded-xl border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-3 py-1.5">
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-2.5 py-1.5">
                   <img src="/images/birb-token.png" alt="" className="h-4 w-4" />
                   <span className="text-[10px] uppercase tracking-wider text-[#ecd9ba]/50">BIRB Played</span>
                   <span className="text-xs font-bold text-[#ecd9ba]">{totalBirbPlayed.toLocaleString()}</span>
                 </div>
 
                 {/* All Time Gold */}
-                <div className="flex items-center gap-2 rounded-xl border border-[#22c55e]/20 bg-[#22c55e]/5 px-3 py-1.5">
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#22c55e]/20 bg-[#22c55e]/5 px-2.5 py-1.5">
                   <svg className="h-4 w-4 text-[#ffd700]" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                   </svg>
@@ -1428,7 +1428,7 @@ export default function Page() {
                 </div>
 
                 {/* Win Rate */}
-                <div className="flex items-center gap-2 rounded-xl border border-[#8b5cf6]/20 bg-[#8b5cf6]/5 px-3 py-1.5">
+                <div className="flex items-center gap-1.5 rounded-xl border border-[#8b5cf6]/20 bg-[#8b5cf6]/5 px-2.5 py-1.5">
                   <svg className="h-4 w-4 text-[#8b5cf6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
                     <polyline points="16 7 22 7 22 13" />
