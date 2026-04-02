@@ -1131,7 +1131,7 @@ export default function Page() {
                       <div>
                         <div className="text-sm font-semibold text-[#ecd9ba]">{userTeam.name}</div>
                         <div className="text-xs text-[#ecd9ba]/50">
-                          {(userTeam.totalVolume / 1_000_000).toFixed(1)}M BIRB Volume
+                          {userTeam.totalVolume.toLocaleString()} BIRB Volume
                         </div>
                       </div>
                     </div>
