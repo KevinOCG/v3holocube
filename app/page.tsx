@@ -1089,7 +1089,14 @@ export default function Page() {
                     )}
                   />
                   <div className="relative">
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src="/images/birblogo.png" 
+                        alt="Birb" 
+                        className="h-5 w-5 opacity-60"
+                      />
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Outcome</div>
+                    </div>
                     <div className={cn(
                       "mt-2 font-heading text-3xl font-black md:text-4xl",
                       result === "hit" && selected.length === 1
@@ -1122,7 +1129,14 @@ export default function Page() {
                   className="flex items-center justify-center rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-6"
                 >
                   <div className="text-center">
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
+                    <div className="flex items-center justify-center gap-2">
+                      <img 
+                        src="/images/birblogo.png" 
+                        alt="Birb" 
+                        className="h-5 w-5 opacity-30"
+                      />
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/30">Outcome</div>
+                    </div>
                     <div className="mt-2 text-sm text-white/20">Spin to see results</div>
                   </div>
                 </motion.div>
@@ -1133,7 +1147,14 @@ export default function Page() {
             <div className="rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src="/images/birblogo.png" 
+                      alt="Birb" 
+                      className="h-4 w-4 opacity-40"
+                    />
+                    <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
+                  </div>
                   {log.length > 0 && (
                     <div className="flex items-center gap-2 text-sm font-bold">
                       <span className="text-[#ecd9ba]">{log.filter((l) => l.result === "hit").length}W</span>
