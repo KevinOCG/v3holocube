@@ -996,6 +996,9 @@ video {
 .mt-8 {
   margin-top: 2rem;
 }
+.ml-4 {
+  margin-left: 1rem;
+}
 .block {
   display: block;
 }
@@ -2686,6 +2689,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 .hover\:border-\[\#ffd700\]\/60:hover {
   border-color: rgb(255 215 0 / 0.6);
+}
+
+.hover\:border-\[\#ecd9ba\]\/40:hover {
+  border-color: rgb(236 217 186 / 0.4);
 }
 
 .hover\:bg-\[\#1a8cd8\]:hover {

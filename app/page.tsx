@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 
 /* ── Lofi Music System ── */
 function useLofiMusic() {
@@ -984,6 +985,21 @@ export default function Page() {
             <div className="text-xs uppercase tracking-[0.2em] text-white/50">
               Prism Concept
             </div>
+            {/* Navigation Links */}
+            <nav className="ml-4 flex items-center gap-2">
+              <Link
+                href="/coinflip"
+                className="rounded-full border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-3 py-1.5 text-xs font-medium text-[#ecd9ba]/80 transition hover:border-[#ecd9ba]/40 hover:bg-[#ecd9ba]/10 hover:text-[#ecd9ba]"
+              >
+                Coinflip
+              </Link>
+              <Link
+                href="/teams"
+                className="rounded-full border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-3 py-1.5 text-xs font-medium text-[#ecd9ba]/80 transition hover:border-[#ecd9ba]/40 hover:bg-[#ecd9ba]/10 hover:text-[#ecd9ba]"
+              >
+                Teams
+              </Link>
+            </nav>
           </div>
           <div className="hidden items-center gap-3 md:flex">
             {/* Music Controls */}
