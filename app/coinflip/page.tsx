@@ -528,179 +528,210 @@ function Coin({
   const showResult = gamePhase === "result" || gamePhase === "locked";
   const isWin = showResult && result === playerChoice;
   const isLoss = showResult && result !== playerChoice;
+  const isIdle = !isFlipping && !showResult;
   
-  // Determine which face to show
-  // Idle: show heads by default
-  // Result: show the actual result (heads or tails)
-  const displayFace = showResult && result ? result : "heads";
-
   // Calculate rotation for result - heads is 0deg, tails is 180deg
   const resultRotation = result === "tails" ? 180 : 0;
 
   return (
-    <div className="relative flex h-[28rem] w-full items-center justify-center" style={{ perspective: "1200px" }}>
-      {/* Background glow */}
+    <div className="relative flex h-[28rem] w-full items-center justify-center" style={{ perspective: "1500px" }}>
+      {/* Luxury ambient glow - always present, pulses on idle */}
       <motion.div
         className={cn(
-          "absolute h-[30rem] w-[30rem] rounded-full blur-3xl",
+          "absolute rounded-full blur-[100px]",
           isWin
-            ? "bg-[#ffd700]/40"
+            ? "h-[28rem] w-[28rem] bg-[#ffd700]/50"
             : isLoss
-              ? "bg-[#dc2626]/25"
-              : isFlipping
-                ? "bg-[#ecd9ba]/30"
-                : "bg-[#7c5237]/20"
+              ? "h-[24rem] w-[24rem] bg-[#dc2626]/30"
+              : "h-[26rem] w-[26rem] bg-[#c9a227]/25"
         )}
         animate={
-          isFlipping 
-            ? { scale: [1, 1.3, 1.1, 1.25, 1], opacity: [0.5, 0.9, 0.7, 0.85, 0.6] } 
-            : showResult
-              ? { scale: [1, 1.4, 1.15], opacity: [0.6, 1, 0.85] }
-              : { scale: 1, opacity: 0.5 }
+          isIdle
+            ? { 
+                scale: [1, 1.08, 1.02, 1.06, 1],
+                opacity: [0.4, 0.55, 0.45, 0.5, 0.4],
+              }
+            : isFlipping 
+              ? { scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] } 
+              : showResult
+                ? { scale: [1, 1.3, 1.1], opacity: [0.5, 1, 0.7] }
+                : { scale: 1, opacity: 0.4 }
         }
-        transition={{ duration: isFlipping ? 0.9 : 0.8, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={
+          isIdle 
+            ? { duration: 4, ease: "easeInOut", repeat: Infinity }
+            : { duration: 0.8, ease: [0.12, 0.82, 0.18, 1] }
+        }
       />
       
-      {/* Inner glow */}
+      {/* Inner golden rim glow */}
       <motion.div
         className={cn(
-          "absolute h-[22rem] w-[22rem] rounded-full blur-3xl",
+          "absolute rounded-full blur-[60px]",
           isWin
-            ? "bg-[#ffec8b]/30"
+            ? "h-[20rem] w-[20rem] bg-[#ffec8b]/40"
             : isLoss
-              ? "bg-[#ff6b6b]/15"
-              : isFlipping
-                ? "bg-[#d39a66]/20"
-                : "bg-[#d39a66]/10"
+              ? "h-[18rem] w-[18rem] bg-[#ff6b6b]/20"
+              : "h-[18rem] w-[18rem] bg-[#d4af37]/20"
         )}
         animate={
-          isFlipping 
-            ? { scale: [1, 1.4, 1.2, 1.35, 1.1], opacity: [0.3, 0.7, 0.5, 0.65, 0.45] } 
-            : showResult
-              ? { scale: [1, 1.5, 1.2], opacity: [0.4, 0.9, 0.6] }
-              : { scale: 1, opacity: 0.3 }
+          isIdle
+            ? { 
+                scale: [1, 1.12, 1.05, 1.1, 1],
+                opacity: [0.3, 0.45, 0.35, 0.42, 0.3],
+              }
+            : isFlipping 
+              ? { scale: [1, 1.3, 1.1], opacity: [0.3, 0.6, 0.4] } 
+              : showResult
+                ? { scale: [1, 1.4, 1.15], opacity: [0.4, 0.8, 0.5] }
+                : { scale: 1, opacity: 0.3 }
         }
-        transition={{ duration: isFlipping ? 0.9 : 0.8, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={
+          isIdle 
+            ? { duration: 3.5, ease: "easeInOut", repeat: Infinity, delay: 0.5 }
+            : { duration: 0.8, ease: [0.12, 0.82, 0.18, 1] }
+        }
       />
+
+      {/* Reflection shimmer on idle */}
+      {isIdle && (
+        <motion.div
+          className="absolute h-[22rem] w-[8rem] rotate-[25deg] rounded-full bg-gradient-to-b from-transparent via-white/10 to-transparent blur-2xl"
+          animate={{
+            x: [-150, 150],
+            opacity: [0, 0.4, 0],
+          }}
+          transition={{
+            duration: 3,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatDelay: 2,
+          }}
+        />
+      )}
 
       {/* Win/Lose particles */}
       <AnimatePresence>
         {showResult && (
           <>
-            {[...Array(isWin ? 20 : 12)].map((_, i) => (
+            {[...Array(isWin ? 24 : 12)].map((_, i) => (
               <motion.div
                 key={i}
                 className={cn(
                   "absolute rounded-full",
                   isWin ? "h-2 w-2 bg-[#ffd700]" : "h-1.5 w-1.5 bg-[#dc2626]"
                 )}
-                initial={{ 
-                  x: 0, 
-                  y: 0, 
-                  opacity: 1, 
-                  scale: 1 
-                }}
+                initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
                 animate={{ 
-                  x: Math.cos((i / (isWin ? 20 : 12)) * Math.PI * 2) * (isWin ? 280 : 180),
-                  y: Math.sin((i / (isWin ? 20 : 12)) * Math.PI * 2) * (isWin ? 280 : 180),
+                  x: Math.cos((i / (isWin ? 24 : 12)) * Math.PI * 2) * (isWin ? 300 : 180),
+                  y: Math.sin((i / (isWin ? 24 : 12)) * Math.PI * 2) * (isWin ? 300 : 180),
                   opacity: 0,
                   scale: 0
                 }}
-                transition={{ duration: isWin ? 1.4 : 0.8, ease: "easeOut", delay: i * 0.025 }}
+                transition={{ duration: isWin ? 1.2 : 0.7, ease: "easeOut", delay: i * 0.02 }}
               />
             ))}
           </>
         )}
       </AnimatePresence>
 
-      {/* 3D Coin container */}
-      <div className="relative z-10 h-56 w-56" style={{ transformStyle: "preserve-3d" }}>
+      {/* 3D Coin container - BIGGER SIZE */}
+      <div className="relative z-10 h-72 w-72" style={{ transformStyle: "preserve-3d" }}>
+        {/* Idle floating wrapper */}
         <motion.div
-          className="relative h-full w-full"
-          style={{ transformStyle: "preserve-3d" }}
+          className="h-full w-full"
           animate={
-            isFlipping
-              ? {
-                  rotateX: [0, 1800 + resultRotation], // Multiple fast rotations + land on result
-                  y: [0, -120, -80, -100, 0], // Dramatic arc
-                  scale: [1, 1.15, 1.1, 1.12, 1],
-                }
-              : showResult
-                ? {
-                    rotateX: resultRotation,
-                    y: [0, -15, 0],
-                    scale: [0.95, 1.08, 1],
-                  }
-                : {
-                    rotateX: 0,
-                    y: 0,
-                    scale: 1,
-                  }
+            isIdle
+              ? { y: [0, -12, 0, -8, 0] }
+              : { y: 0 }
           }
           transition={
-            isFlipping
-              ? {
-                  rotateX: { duration: 0.9, ease: [0.12, 0.4, 0.22, 1] }, // Fast start, dramatic slow at end
-                  y: { duration: 0.9, ease: [0.12, 0.82, 0.18, 1] },
-                  scale: { duration: 0.9, ease: [0.12, 0.82, 0.18, 1] },
-                }
-              : {
-                  duration: 0.5,
-                  ease: [0.12, 0.82, 0.18, 1],
-                }
+            isIdle
+              ? { duration: 4, ease: "easeInOut", repeat: Infinity }
+              : { duration: 0.3 }
           }
         >
-          {/* Heads side (front) */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ 
-              backfaceVisibility: "hidden",
-            }}
+          {/* Flip rotation wrapper */}
+          <motion.div
+            className="relative h-full w-full"
+            style={{ transformStyle: "preserve-3d" }}
+            animate={
+              isFlipping
+                ? { rotateX: [0, 1440 + resultRotation] } // 4 fast rotations + land on result
+                : showResult
+                  ? { rotateX: resultRotation }
+                  : { rotateX: 0 }
+            }
+            transition={
+              isFlipping
+                ? { duration: 1.1, ease: [0.2, 0.8, 0.3, 1] } // Fast spin, smooth deceleration
+                : { duration: 0.4, ease: [0.12, 0.82, 0.18, 1] }
+            }
           >
-            <img 
-              src="/birb_heads.png"
-              alt="heads"
-              className={cn(
-                "h-56 w-56 object-contain",
-                showResult && result === "heads" && "drop-shadow-[0_0_60px_rgba(255,215,0,0.7)]",
-                !showResult && "drop-shadow-[0_0_30px_rgba(255,215,0,0.35)]"
-              )}
-            />
-          </div>
+            {/* Heads side (front) */}
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ backfaceVisibility: "hidden" }}
+            >
+              <motion.img 
+                src="/birb_heads.png"
+                alt="heads"
+                className="h-72 w-72 object-contain"
+                animate={
+                  isIdle
+                    ? { 
+                        filter: [
+                          "drop-shadow(0 0 40px rgba(255,215,0,0.4))",
+                          "drop-shadow(0 0 60px rgba(255,215,0,0.6))",
+                          "drop-shadow(0 0 45px rgba(255,215,0,0.45))",
+                          "drop-shadow(0 0 55px rgba(255,215,0,0.55))",
+                          "drop-shadow(0 0 40px rgba(255,215,0,0.4))",
+                        ]
+                      }
+                    : showResult && result === "heads"
+                      ? { filter: "drop-shadow(0 0 80px rgba(255,215,0,0.8))" }
+                      : { filter: "drop-shadow(0 0 30px rgba(255,215,0,0.3))" }
+                }
+                transition={
+                  isIdle
+                    ? { duration: 3, ease: "easeInOut", repeat: Infinity }
+                    : { duration: 0.5 }
+                }
+              />
+            </div>
 
-          {/* Tails side (back) */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ 
-              backfaceVisibility: "hidden",
-              transform: "rotateX(180deg)",
-            }}
-          >
-            <img 
-              src="/birb_tails.png"
-              alt="tails"
-              className={cn(
-                "h-56 w-56 object-contain",
-                showResult && result === "tails" && "drop-shadow-[0_0_60px_rgba(255,180,100,0.7)]",
-                !showResult && "drop-shadow-[0_0_30px_rgba(255,180,100,0.35)]"
-              )}
-            />
-          </div>
+            {/* Tails side (back) */}
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ backfaceVisibility: "hidden", transform: "rotateX(180deg)" }}
+            >
+              <img 
+                src="/birb_tails.png"
+                alt="tails"
+                className={cn(
+                  "h-72 w-72 object-contain",
+                  showResult && result === "tails" 
+                    ? "drop-shadow-[0_0_80px_rgba(255,180,100,0.8)]"
+                    : "drop-shadow-[0_0_30px_rgba(255,180,100,0.3)]"
+                )}
+              />
+            </div>
+          </motion.div>
         </motion.div>
 
         {/* Result indicator badge */}
         <AnimatePresence>
           {showResult && result && (
             <motion.div
-              initial={{ scale: 0, opacity: 0, y: 20 }}
+              initial={{ scale: 0, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0, opacity: 0 }}
-              transition={{ delay: 0.3, duration: 0.4, ease: [0.12, 0.82, 0.18, 1] }}
+              transition={{ delay: 0.4, duration: 0.5, ease: [0.12, 0.82, 0.18, 1] }}
               className={cn(
-                "absolute -bottom-8 left-1/2 -translate-x-1/2 rounded-full px-5 py-2 font-heading text-sm font-black uppercase tracking-wider shadow-lg",
+                "absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full px-6 py-2.5 font-heading text-base font-black uppercase tracking-wider shadow-lg",
                 isWin
-                  ? "bg-[#ffd700] text-[#1a1510] shadow-[0_0_25px_rgba(255,215,0,0.6)]"
-                  : "bg-[#dc2626] text-white shadow-[0_0_25px_rgba(220,38,38,0.5)]"
+                  ? "bg-[#ffd700] text-[#1a1510] shadow-[0_0_30px_rgba(255,215,0,0.7)]"
+                  : "bg-[#dc2626] text-white shadow-[0_0_30px_rgba(220,38,38,0.6)]"
               )}
             >
               {result}
@@ -709,21 +740,24 @@ function Coin({
         </AnimatePresence>
       </div>
 
-      {/* Shadow */}
+      {/* Shadow - responds to coin height */}
       <motion.div
-        className="pointer-events-none absolute bottom-6 h-8 w-[18rem] rounded-full bg-black/60 blur-2xl"
+        className="pointer-events-none absolute bottom-4 h-6 w-[16rem] rounded-full bg-black/70 blur-2xl"
         animate={
-          isFlipping 
+          isIdle
             ? { 
-                scaleX: [1, 0.5, 0.7, 0.55, 0.9, 1], 
-                scaleY: [1, 0.6, 0.75, 0.65, 0.85, 1],
-                opacity: [0.5, 0.2, 0.35, 0.25, 0.4, 0.55] 
-              } 
-            : showResult
-              ? { scaleX: 1, scaleY: 1, opacity: 0.55 }
-              : { scaleX: 1, scaleY: 1, opacity: 0.45 }
+                scaleX: [1, 0.92, 1, 0.95, 1],
+                opacity: [0.5, 0.4, 0.5, 0.42, 0.5],
+              }
+            : isFlipping 
+              ? { scaleX: [1, 0.6, 0.8, 0.7, 1], opacity: [0.5, 0.25, 0.35, 0.3, 0.5] } 
+              : { scaleX: 1, opacity: 0.5 }
         }
-        transition={{ duration: isFlipping ? 0.9 : 0.5, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={
+          isIdle
+            ? { duration: 4, ease: "easeInOut", repeat: Infinity }
+            : { duration: 1.1, ease: [0.12, 0.82, 0.18, 1] }
+        }
       />
     </div>
   );
