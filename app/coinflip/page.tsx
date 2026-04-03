@@ -503,7 +503,7 @@ function TokenRain({ active }: { active: boolean }) {
           }}
         >
           <img 
-            src="/images/birb-token.png" 
+            src="/birb_heads.png" 
             alt="" 
             className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(255,200,100,0.5)]"
           />
@@ -513,79 +513,87 @@ function TokenRain({ active }: { active: boolean }) {
   );
 }
 
-/* ── Coin Component with Video Spin ── */
+/* ── 3D Coin Component with Framer Motion ── */
 function Coin({
   isFlipping,
   result,
   gamePhase,
+  playerChoice,
 }: {
   isFlipping: boolean;
   result: FlipResult | null;
   gamePhase: GamePhase;
+  playerChoice: PlayerChoice;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    if (isFlipping && videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.playbackRate = 2.5; // Much faster playback
-      videoRef.current.play();
-    }
-  }, [isFlipping]);
-
-  const showVideo = isFlipping;
   const showResult = gamePhase === "result" || gamePhase === "locked";
+  const isWin = showResult && result === playerChoice;
+  const isLoss = showResult && result !== playerChoice;
+  
+  // Determine which face to show
+  // Idle: show heads by default
+  // Result: show the actual result (heads or tails)
+  const displayFace = showResult && result ? result : "heads";
+
+  // Calculate rotation for result - heads is 0deg, tails is 180deg
+  const resultRotation = result === "tails" ? 180 : 0;
 
   return (
-    <div className="relative flex h-[28rem] w-full items-center justify-center">
+    <div className="relative flex h-[28rem] w-full items-center justify-center" style={{ perspective: "1200px" }}>
       {/* Background glow */}
       <motion.div
         className={cn(
           "absolute h-[30rem] w-[30rem] rounded-full blur-3xl",
-          showResult && result
-            ? "bg-[#ffd700]/30"
-            : isFlipping
-              ? "bg-[#ecd9ba]/25"
-              : "bg-[#7c5237]/20"
+          isWin
+            ? "bg-[#ffd700]/40"
+            : isLoss
+              ? "bg-[#dc2626]/25"
+              : isFlipping
+                ? "bg-[#ecd9ba]/30"
+                : "bg-[#7c5237]/20"
         )}
         animate={
           isFlipping 
-            ? { scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] } 
+            ? { scale: [1, 1.3, 1.1, 1.25, 1], opacity: [0.5, 0.9, 0.7, 0.85, 0.6] } 
             : showResult
-              ? { scale: [1, 1.3, 1.1], opacity: [0.6, 1, 0.8] }
+              ? { scale: [1, 1.4, 1.15], opacity: [0.6, 1, 0.85] }
               : { scale: 1, opacity: 0.5 }
         }
-        transition={{ duration: isFlipping ? 0.8 : 1.5, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={{ duration: isFlipping ? 0.9 : 0.8, ease: [0.12, 0.82, 0.18, 1] }}
       />
       
       {/* Inner glow */}
       <motion.div
         className={cn(
-          "absolute h-[20rem] w-[20rem] rounded-full blur-3xl",
-          showResult && result
-            ? "bg-[#ffec8b]/20"
-            : isFlipping
-              ? "bg-[#d39a66]/15"
-              : "bg-[#d39a66]/10"
+          "absolute h-[22rem] w-[22rem] rounded-full blur-3xl",
+          isWin
+            ? "bg-[#ffec8b]/30"
+            : isLoss
+              ? "bg-[#ff6b6b]/15"
+              : isFlipping
+                ? "bg-[#d39a66]/20"
+                : "bg-[#d39a66]/10"
         )}
         animate={
           isFlipping 
-            ? { scale: [1, 1.3, 1.1], opacity: [0.3, 0.6, 0.4] } 
+            ? { scale: [1, 1.4, 1.2, 1.35, 1.1], opacity: [0.3, 0.7, 0.5, 0.65, 0.45] } 
             : showResult
-              ? { scale: [1, 1.4, 1.15], opacity: [0.4, 0.8, 0.5] }
+              ? { scale: [1, 1.5, 1.2], opacity: [0.4, 0.9, 0.6] }
               : { scale: 1, opacity: 0.3 }
         }
-        transition={{ duration: isFlipping ? 0.8 : 1.5, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={{ duration: isFlipping ? 0.9 : 0.8, ease: [0.12, 0.82, 0.18, 1] }}
       />
 
-      {/* Win particles */}
+      {/* Win/Lose particles */}
       <AnimatePresence>
-        {showResult && result && (
+        {showResult && (
           <>
-            {[...Array(16)].map((_, i) => (
+            {[...Array(isWin ? 20 : 12)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute h-2 w-2 rounded-full bg-[#ffd700]"
+                className={cn(
+                  "absolute rounded-full",
+                  isWin ? "h-2 w-2 bg-[#ffd700]" : "h-1.5 w-1.5 bg-[#dc2626]"
+                )}
                 initial={{ 
                   x: 0, 
                   y: 0, 
@@ -593,84 +601,130 @@ function Coin({
                   scale: 1 
                 }}
                 animate={{ 
-                  x: Math.cos((i / 16) * Math.PI * 2) * 250,
-                  y: Math.sin((i / 16) * Math.PI * 2) * 250,
+                  x: Math.cos((i / (isWin ? 20 : 12)) * Math.PI * 2) * (isWin ? 280 : 180),
+                  y: Math.sin((i / (isWin ? 20 : 12)) * Math.PI * 2) * (isWin ? 280 : 180),
                   opacity: 0,
                   scale: 0
                 }}
-                transition={{ duration: 1.2, ease: "easeOut", delay: i * 0.03 }}
+                transition={{ duration: isWin ? 1.4 : 0.8, ease: "easeOut", delay: i * 0.025 }}
               />
             ))}
           </>
         )}
       </AnimatePresence>
 
-      {/* Coin container */}
-      <div className="relative z-10 flex items-center justify-center">
-        {/* Video for spinning - hidden when showing result */}
-        <video
-          ref={videoRef}
-          src="/token_spin.mp4"
-          className={cn(
-            "h-64 w-64 object-contain transition-opacity duration-200",
-            showVideo ? "opacity-100" : "opacity-0 pointer-events-none absolute"
-          )}
-          muted
-          playsInline
-          onEnded={() => {
-            if (videoRef.current) {
-              videoRef.current.pause();
-            }
-          }}
-        />
-
-        {/* Static coin image for idle/result states */}
-        {!showVideo && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ 
-              scale: showResult ? [0.9, 1.1, 1] : 1, 
-              opacity: 1,
-              y: showResult ? [0, -20, 0] : 0
+      {/* 3D Coin container */}
+      <div className="relative z-10" style={{ transformStyle: "preserve-3d" }}>
+        <motion.div
+          className="relative"
+          style={{ transformStyle: "preserve-3d" }}
+          animate={
+            isFlipping
+              ? {
+                  rotateX: [0, 1800 + resultRotation], // Multiple fast rotations + land on result
+                  y: [0, -120, -80, -100, 0], // Dramatic arc
+                  scale: [1, 1.15, 1.1, 1.12, 1],
+                }
+              : showResult
+                ? {
+                    rotateX: resultRotation,
+                    y: [0, -15, 0],
+                    scale: [0.95, 1.08, 1],
+                  }
+                : {
+                    rotateX: 0,
+                    y: 0,
+                    scale: 1,
+                  }
+          }
+          transition={
+            isFlipping
+              ? {
+                  rotateX: { duration: 0.9, ease: [0.12, 0.4, 0.22, 1] }, // Fast start, dramatic slow at end
+                  y: { duration: 0.9, ease: [0.12, 0.82, 0.18, 1] },
+                  scale: { duration: 0.9, ease: [0.12, 0.82, 0.18, 1] },
+                }
+              : {
+                  duration: 0.5,
+                  ease: [0.12, 0.82, 0.18, 1],
+                }
+          }
+        >
+          {/* Heads side (front) */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ 
+              backfaceVisibility: "hidden",
+              transform: "rotateX(0deg)",
             }}
-            transition={{ 
-              duration: showResult ? 0.6 : 0.3,
-              ease: [0.12, 0.82, 0.18, 1]
-            }}
-            className="relative"
           >
             <img 
-              src="/images/birb-token.png"
-              alt={result || "coin"}
+              src="/birb_heads.png"
+              alt="heads"
               className={cn(
-                "h-64 w-64 object-contain drop-shadow-[0_0_30px_rgba(255,215,0,0.4)]",
-                showResult && "drop-shadow-[0_0_50px_rgba(255,215,0,0.6)]"
+                "h-56 w-56 object-contain",
+                showResult && result === "heads" && "drop-shadow-[0_0_60px_rgba(255,215,0,0.7)]",
+                !showResult && "drop-shadow-[0_0_30px_rgba(255,215,0,0.35)]"
               )}
             />
-            {/* Result indicator overlay */}
-            {showResult && result && (
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#ffd700] px-4 py-1.5 font-heading text-sm font-black uppercase tracking-wider text-[#1a1510] shadow-[0_0_20px_rgba(255,215,0,0.5)]"
-              >
-                {result}
-              </motion.div>
-            )}
-          </motion.div>
-        )}
+          </div>
+
+          {/* Tails side (back) */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ 
+              backfaceVisibility: "hidden",
+              transform: "rotateX(180deg)",
+            }}
+          >
+            <img 
+              src="/birb_tails.png"
+              alt="tails"
+              className={cn(
+                "h-56 w-56 object-contain",
+                showResult && result === "tails" && "drop-shadow-[0_0_60px_rgba(255,180,100,0.7)]",
+                !showResult && "drop-shadow-[0_0_30px_rgba(255,180,100,0.35)]"
+              )}
+            />
+          </div>
+        </motion.div>
+
+        {/* Result indicator badge */}
+        <AnimatePresence>
+          {showResult && result && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ delay: 0.3, duration: 0.4, ease: [0.12, 0.82, 0.18, 1] }}
+              className={cn(
+                "absolute -bottom-8 left-1/2 -translate-x-1/2 rounded-full px-5 py-2 font-heading text-sm font-black uppercase tracking-wider shadow-lg",
+                isWin
+                  ? "bg-[#ffd700] text-[#1a1510] shadow-[0_0_25px_rgba(255,215,0,0.6)]"
+                  : "bg-[#dc2626] text-white shadow-[0_0_25px_rgba(220,38,38,0.5)]"
+              )}
+            >
+              {result}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Shadow */}
       <motion.div
-        className="pointer-events-none absolute bottom-8 h-12 w-[20rem] rounded-full bg-black/50 blur-2xl"
+        className="pointer-events-none absolute bottom-6 h-8 w-[18rem] rounded-full bg-black/60 blur-2xl"
         animate={
           isFlipping 
-            ? { scaleX: [1, 0.7, 1.1, 0.9], opacity: [0.5, 0.3, 0.6, 0.45] } 
-            : { scaleX: 1, opacity: 0.45 }
+            ? { 
+                scaleX: [1, 0.5, 0.7, 0.55, 0.9, 1], 
+                scaleY: [1, 0.6, 0.75, 0.65, 0.85, 1],
+                opacity: [0.5, 0.2, 0.35, 0.25, 0.4, 0.55] 
+              } 
+            : showResult
+              ? { scaleX: 1, scaleY: 1, opacity: 0.55 }
+              : { scaleX: 1, scaleY: 1, opacity: 0.45 }
         }
-        transition={{ duration: 0.8, ease: [0.12, 0.82, 0.18, 1] }}
+        transition={{ duration: isFlipping ? 0.9 : 0.5, ease: [0.12, 0.82, 0.18, 1] }}
       />
     </div>
   );
@@ -1003,6 +1057,7 @@ export default function CoinflipPage() {
                 isFlipping={isFlipping}
                 result={flipResult}
                 gamePhase={gamePhase}
+                playerChoice={playerChoice}
               />
             </div>
           </div>
@@ -1144,11 +1199,10 @@ export default function CoinflipPage() {
                         <div className="relative">
                           <div className="mb-2 flex justify-center">
                             <img 
-                              src="/images/birb-token.png" 
+                              src={choice === "heads" ? "/birb_heads.png" : "/birb_tails.png"}
                               alt={choice}
                               className={cn(
                                 "h-16 w-16 object-contain transition-all duration-300",
-                                choice === "tails" && "rotate-180",
                                 active ? "opacity-100 drop-shadow-[0_0_12px_rgba(255,215,0,0.4)]" : "opacity-50 grayscale"
                               )}
                             />
