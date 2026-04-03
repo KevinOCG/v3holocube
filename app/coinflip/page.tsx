@@ -614,9 +614,9 @@ function Coin({
       </AnimatePresence>
 
       {/* 3D Coin container */}
-      <div className="relative z-10" style={{ transformStyle: "preserve-3d" }}>
+      <div className="relative z-10 h-56 w-56" style={{ transformStyle: "preserve-3d" }}>
         <motion.div
-          className="relative"
+          className="relative h-full w-full"
           style={{ transformStyle: "preserve-3d" }}
           animate={
             isFlipping
@@ -652,10 +652,9 @@ function Coin({
         >
           {/* Heads side (front) */}
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            className="absolute inset-0 flex items-center justify-center"
             style={{ 
               backfaceVisibility: "hidden",
-              transform: "rotateX(0deg)",
             }}
           >
             <img 
@@ -671,7 +670,7 @@ function Coin({
 
           {/* Tails side (back) */}
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            className="absolute inset-0 flex items-center justify-center"
             style={{ 
               backfaceVisibility: "hidden",
               transform: "rotateX(180deg)",
