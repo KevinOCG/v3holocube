@@ -631,7 +631,10 @@ function SpinResultCard({
 
           {team && (
             <>
-              <div className="mt-1 text-sm text-[#d12429]">
+              <div className={cn(
+                "mt-1 text-sm font-medium",
+                result === "hit" ? "text-[#22c55e]" : "text-[#ecd9ba]/70"
+              )}>
                 +{spinAmount.toLocaleString()} Volume to {team.name}
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -639,7 +642,12 @@ function SpinResultCard({
                   #{contributorRank} contributor on your team
                 </span>
                 {team.rank && team.rank > 1 && (
-                  <span className="rounded-full bg-[#d12429]/20 px-2 py-0.5 text-xs text-[#d12429]">
+                  <span className={cn(
+                    "rounded-full px-2 py-0.5 text-xs",
+                    result === "hit" 
+                      ? "bg-[#22c55e]/20 text-[#22c55e]"
+                      : "bg-[#ecd9ba]/10 text-[#ecd9ba]/70"
+                  )}>
                     {rankGap.toLocaleString()} BIRB to Rank #{team.rank - 1}
                   </span>
                 )}
@@ -770,11 +778,20 @@ function TokenRain({ isActive }: { isActive: boolean }) {
   );
 }
 
-/* ── Gold Rate Decay: day 1 = peak, day 28 = floor ── */
+/* ── Gold Rate Decay: 5-day grace period at 100%, then steeper curve to floor ── */
 function getBaseGoldMultiplier(day: number): number {
+  const gracePeriod = 5; // 5 days at full rate
   const floor = 0.35;
-  const k = 0.038;
-  return floor + (1 - floor) * Math.exp(-k * (day - 1));
+  
+  if (day <= gracePeriod) {
+    return 1.0; // Full rate during grace period
+  }
+  
+  // Steeper decay after grace period (day 6-28 maps to curve 0-22)
+  const decayDays = day - gracePeriod;
+  const totalDecayDays = 28 - gracePeriod; // 23 days of decay
+  const k = 0.12; // Steeper decay rate
+  return floor + (1 - floor) * Math.exp(-k * decayDays);
 }
 
 function getGoldRateNum(picks: number, dayMultiplier: number): number {
@@ -791,8 +808,32 @@ function getGoldRate(picks: number, dayMultiplier: number): string {
 function DayDecayCurve({ currentDay }: { currentDay: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [circlePos, setCirclePos] = useState({ x: 0, y: 0 });
+  const gracePeriod = 5;
 
-  const points = useMemo(() => {
+  // Grace period flat line points (green)
+  const gracePoints = useMemo(() => {
+    const pts: string[] = [];
+    for (let d = 1; d <= gracePeriod; d++) {
+      const x = ((d - 1) / 27) * 100;
+      const y = (1 - getBaseGoldMultiplier(d)) * 100; // Should be 0 (top)
+      pts.push(`${x},${y}`);
+    }
+    return pts.join(" ");
+  }, []);
+
+  // Decay curve points (red/gold gradient)
+  const decayPoints = useMemo(() => {
+    const pts: string[] = [];
+    for (let d = gracePeriod; d <= 28; d++) {
+      const x = ((d - 1) / 27) * 100;
+      const y = (1 - getBaseGoldMultiplier(d)) * 100;
+      pts.push(`${x},${y}`);
+    }
+    return pts.join(" ");
+  }, []);
+
+  // Full path for fill
+  const allPoints = useMemo(() => {
     const pts: string[] = [];
     for (let d = 1; d <= 28; d++) {
       const x = ((d - 1) / 27) * 100;
@@ -804,6 +845,7 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
 
   const currentX = ((currentDay - 1) / 27) * 100;
   const currentY = (1 - getBaseGoldMultiplier(currentDay)) * 100;
+  const isInGracePeriod = currentDay <= gracePeriod;
 
   useEffect(() => {
     if (svgRef.current) {
@@ -821,24 +863,42 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
         <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
         <line x1="100" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
         <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-        <polyline points={points} fill="none" stroke="url(#goldGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-        <polyline points={`0,0 ${points} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
+        
+        {/* Grace period - flat green line */}
+        <polyline points={gracePoints} fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        
+        {/* Decay curve - red to gold gradient */}
+        <polyline points={decayPoints} fill="none" stroke="url(#decayGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        
+        {/* Fill under the curve */}
+        <polyline points={`0,0 ${allPoints} 100,${(1 - getBaseGoldMultiplier(28)) * 100} 100,100 0,100`} fill="url(#goldFill)" />
+        
         <defs>
-          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#d12429" />
+          <linearGradient id="decayGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22c55e" />
+            <stop offset="20%" stopColor="#d12429" />
             <stop offset="100%" stopColor="#ecd9ba" />
           </linearGradient>
           <linearGradient id="goldFill" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="rgba(209,36,41,0.12)" />
+            <stop offset="0%" stopColor="rgba(34,197,94,0.08)" />
+            <stop offset="30%" stopColor="rgba(209,36,41,0.08)" />
             <stop offset="100%" stopColor="rgba(209,36,41,0)" />
           </linearGradient>
         </defs>
       </svg>
       <div 
-        className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#d12429] shadow-[0_0_8px_rgba(209,36,41,0.6)]"
+        className={cn(
+          "absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_8px]",
+          isInGracePeriod 
+            ? "bg-[#22c55e] shadow-[#22c55e]/60" 
+            : "bg-[#d12429] shadow-[#d12429]/60"
+        )}
         style={{ left: circlePos.x, top: circlePos.y }}
       >
-        <div className="absolute inset-[-4px] rounded-full border border-[#d12429]/40" />
+        <div className={cn(
+          "absolute inset-[-4px] rounded-full border",
+          isInGracePeriod ? "border-[#22c55e]/40" : "border-[#d12429]/40"
+        )} />
       </div>
     </div>
   );
@@ -1606,11 +1666,20 @@ export default function Page() {
                             )} 
                           />
                         </div>
-                        <div>
-                          <div className={cn(
-                            "text-sm font-bold transition-colors duration-300",
-                            active ? "text-white" : "text-white/50"
-                          )}>{character.name}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "text-sm font-bold transition-colors duration-300",
+                              active ? "text-white" : "text-white/50"
+                            )}>{character.name}</span>
+                            {active && (
+                              <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#c9a86c] text-[#1a1510]">
+                                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
                           <div className={cn(
                             "text-[10px] uppercase tracking-[0.18em] transition-colors duration-300",
                             active ? "text-[#c9a86c]" : "text-white/30"
@@ -1618,15 +1687,6 @@ export default function Page() {
                             {active ? "Selected" : "Tap to select"}
                           </div>
                         </div>
-                        {active && (
-                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#c9a86c] text-[#1a1510]">
-                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </button>
                   );
