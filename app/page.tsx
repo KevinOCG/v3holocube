@@ -1575,46 +1575,79 @@ export default function Page() {
                 </a>
               )}
 
-              {/* Spin Amount Selection */}
+              {/* Spin Amount Selection - Slider + Input */}
               <div className="rounded-[1.6rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.04),rgba(14,8,6,0.42))] p-4 shadow-[inset_0_1px_0_rgba(255,245,234,0.04)]">
                 <div className="mb-3 flex items-center justify-between">
                   <label className="text-xs uppercase tracking-[0.18em] text-white/45">Spin Amount</label>
                   <div className="text-xs text-white/40">Balance: {balance.toLocaleString()} BIRB</div>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {[500, 1000, 5000].map((amount) => (
-                    <button
-                      key={amount}
-                      onClick={() => setSpinAmount(amount)}
-                      disabled={balance < amount}
-                      className={cn(
-                        "rounded-xl py-3 text-center text-sm font-bold transition-all",
-                        spinAmount === amount
-                          ? "border border-[#d12429]/30 bg-[#d12429]/20 text-white"
-                          : "border border-[#ecd9ba]/10 bg-[#ecd9ba]/5 text-white/70 hover:bg-[#ecd9ba]/10",
-                        balance < amount && "cursor-not-allowed opacity-40"
-                      )}
-                    >
-                      {amount.toLocaleString()}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => {
-                      const custom = prompt("Enter custom spin amount:");
-                      if (custom) {
-                        const num = parseInt(custom);
-                        if (num > 0 && num <= balance) {
-                          setSpinAmount(num);
+                
+                {/* Slider + Input Row */}
+                <div className="flex items-center gap-3">
+                  {/* Slider */}
+                  <div className="relative flex-1">
+                    <input
+                      type="range"
+                      min={100}
+                      max={balance}
+                      step={100}
+                      value={Math.min(spinAmount, balance)}
+                      onChange={(e) => setSpinAmount(parseInt(e.target.value))}
+                      className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#ecd9ba]/10 accent-[#d12429] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429] [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)] [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#d12429] [&::-moz-range-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)]"
+                      style={{
+                        background: `linear-gradient(to right, #d12429 0%, #d12429 ${((Math.min(spinAmount, balance) - 100) / (balance - 100)) * 100}%, rgba(236,217,186,0.1) ${((Math.min(spinAmount, balance) - 100) / (balance - 100)) * 100}%, rgba(236,217,186,0.1) 100%)`
+                      }}
+                    />
+                    {/* Min/Max labels */}
+                    <div className="mt-1 flex justify-between text-[10px] text-white/30">
+                      <span>100</span>
+                      <span>{balance.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Input Field */}
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={100}
+                      max={balance}
+                      value={spinAmount}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        if (val >= 0 && val <= balance) {
+                          setSpinAmount(val);
+                        } else if (val > balance) {
+                          setSpinAmount(balance);
                         }
-                      }
-                    }}
-                    className="rounded-xl border border-[#ecd9ba]/10 bg-[#ecd9ba]/5 py-3 text-center text-sm font-medium text-white/50 transition-all hover:bg-[#ecd9ba]/10"
-                  >
-                    Custom
-                  </button>
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value) || 100;
+                        setSpinAmount(Math.max(100, Math.min(val, balance)));
+                      }}
+                      className="w-24 rounded-xl border border-[#ecd9ba]/20 bg-[#1a1510] px-3 py-2.5 text-center text-sm font-bold text-white outline-none transition-colors focus:border-[#d12429]/50 focus:ring-1 focus:ring-[#d12429]/30 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <div className="absolute -bottom-4 left-0 right-0 text-center text-[10px] text-white/30">BIRB</div>
+                  </div>
                 </div>
-                {/* Quick Add */}
-                <div className="mt-3 flex gap-2">
+                
+                {/* Quick presets + Add Funds */}
+                <div className="mt-5 flex items-center justify-between">
+                  <div className="flex gap-1.5">
+                    {[25, 50, 75, 100].map((pct) => (
+                      <button
+                        key={pct}
+                        onClick={() => setSpinAmount(Math.max(100, Math.floor((balance * pct) / 100)))}
+                        className={cn(
+                          "rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all",
+                          spinAmount === Math.floor((balance * pct) / 100)
+                            ? "bg-[#d12429]/20 text-[#d12429]"
+                            : "bg-[#ecd9ba]/5 text-white/40 hover:bg-[#ecd9ba]/10 hover:text-white/60"
+                        )}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
                   <button
                     onClick={() => setShowAddFundsModal(true)}
                     className="flex items-center gap-1 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 px-2 py-1 text-xs text-[#22c55e] transition-colors hover:bg-[#22c55e]/20"
