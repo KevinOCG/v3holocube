@@ -3,25 +3,23 @@
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { MOCK_LEADERBOARD, type Team } from "./teams/team-utils";
 
 /* ── Lofi Music System ── */
 function useLofiMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isMuted, setIsMuted] = useState(false); // Start unmuted for autoplay
-  const [volume, setVolume] = useState(0.06); // Lower default volume
+  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.06);
 
   useEffect(() => {
-    // Create audio element on mount
     const audio = new Audio('/lofi-track.mp3');
     audio.loop = true;
     audio.volume = volume;
     audioRef.current = audio;
 
-    // Attempt autoplay
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
-        // Autoplay was prevented, user needs to interact first
         setIsMuted(true);
       });
     }
@@ -91,7 +89,6 @@ function useSoundEffects() {
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + 0.3);
 
-    // Create continuous spinning whoosh
     const spinInterval = setInterval(() => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -111,7 +108,6 @@ function useSoundEffects() {
   const playWinSound = useCallback((isDramatic = false) => {
     const ctx = getAudioContext();
     
-    // Triumphant ascending notes
     const notes = isDramatic ? [523, 659, 784, 1047, 1319] : [523, 659, 784];
     const duration = isDramatic ? 0.25 : 0.15;
     
@@ -134,7 +130,6 @@ function useSoundEffects() {
       oscillator.stop(startTime + duration * 1.5);
     });
 
-    // Add shimmer for dramatic wins
     if (isDramatic) {
       for (let i = 0; i < 8; i++) {
         const shimmer = ctx.createOscillator();
@@ -155,7 +150,6 @@ function useSoundEffects() {
   const playLoseSound = useCallback(() => {
     const ctx = getAudioContext();
     
-    // Descending disappointed notes
     const notes = [392, 330, 262];
     
     notes.forEach((freq, i) => {
@@ -210,7 +204,7 @@ type LogEntry = {
   picks: string[];
   landed: string;
   result: "hit" | "miss";
-  goldEarned: string; // e.g. "+4.40x" or "0"
+  goldEarned: string;
   deposit: number;
 };
 
@@ -267,20 +261,17 @@ function ShareModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Modal */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         className="relative z-10 w-full max-w-md"
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute -top-2 -right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1210] text-white/60 hover:text-white transition-colors"
@@ -291,14 +282,11 @@ function ShareModal({
           </svg>
         </button>
 
-        {/* Shareable Card */}
         <div
           ref={cardRef}
           className="overflow-hidden rounded-3xl border border-[#ffd700]/20 bg-black"
         >
-          {/* Header with gold owl background */}
           <div className="relative px-8 pt-8 pb-6">
-            {/* Gold owl background image */}
             <img 
               src="/images/birb-gold.jpg" 
               alt="" 
@@ -318,7 +306,6 @@ function ShareModal({
             </div>
           </div>
 
-          {/* Stats */}
           <div className="border-t border-[#ffd700]/10 bg-black px-8 py-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
@@ -342,7 +329,6 @@ function ShareModal({
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="mt-4 flex gap-3">
           <button
             onClick={downloadImage}
@@ -367,6 +353,362 @@ function ShareModal({
           </button>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+/* ── Add Funds Modal ── */
+function AddFundsModal({
+  isOpen,
+  onClose,
+  onAddFunds,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAddFunds: (amount: number) => void;
+}) {
+  const [customAmount, setCustomAmount] = useState("");
+
+  if (!isOpen) return null;
+
+  const quickAmounts = [1000, 5000, 10000, 25000];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-[#ecd9ba]/15 bg-[linear-gradient(180deg,rgba(20,14,12,0.98),rgba(10,6,4,0.99))]"
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-2xl font-black text-white">Add Funds</h2>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <p className="mt-2 text-sm text-white/50">
+            Add BIRB to your balance to spin the prism.
+          </p>
+
+          {/* Quick Add Buttons */}
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            {quickAmounts.map((amount) => (
+              <button
+                key={amount}
+                onClick={() => {
+                  onAddFunds(amount);
+                  onClose();
+                }}
+                className="group relative overflow-hidden rounded-2xl border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-4 py-4 text-left transition-all hover:border-[#d12429]/30 hover:bg-[#d12429]/10"
+              >
+                <div className="text-xs uppercase tracking-[0.15em] text-white/40">Add</div>
+                <div className="mt-1 font-heading text-2xl font-bold text-white">
+                  {amount.toLocaleString()}
+                </div>
+                <div className="text-xs text-[#ecd9ba]/60">BIRB</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Amount */}
+          <div className="mt-5">
+            <label className="text-xs uppercase tracking-[0.15em] text-white/40">
+              Custom Amount
+            </label>
+            <div className="mt-2 flex gap-3">
+              <div className="relative flex-1">
+                <input
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value.replace(/[^\d]/g, ""))}
+                  className="h-14 w-full rounded-2xl border border-[#f0dcc6]/10 bg-white/5 px-4 pr-16 text-xl font-bold text-white outline-none"
+                  placeholder="50000"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-white/60">BIRB</div>
+              </div>
+              <button
+                onClick={() => {
+                  const amount = parseInt(customAmount);
+                  if (amount > 0) {
+                    onAddFunds(amount);
+                    onClose();
+                  }
+                }}
+                disabled={!customAmount || parseInt(customAmount) <= 0}
+                className="rounded-2xl bg-[#d12429] px-6 font-bold text-white transition hover:bg-[#7d050d] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ── Team Invite Modal ── */
+function TeamInviteModal({
+  isOpen,
+  onClose,
+  team,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  team: { name: string; code: string };
+}) {
+  const [copied, setCopied] = useState(false);
+  const shareText = `Join my team in Birb Prism! Team: ${team.name} | Code: ${team.code} | Let's dominate the leaderboard together.`;
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareToTwitter = () => {
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(twitterUrl, "_blank", "width=550,height=420");
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-[#d12429]/20 bg-[linear-gradient(180deg,rgba(20,14,12,0.98),rgba(10,6,4,0.99))]"
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-2xl font-black text-white">Invite to Team</h2>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <p className="mt-2 text-sm text-white/50">
+            Invite others to boost your team&apos;s volume and climb the leaderboard!
+          </p>
+
+          <div className="mt-6 rounded-2xl border border-[#d12429]/20 bg-[#d12429]/5 p-4">
+            <div className="text-xs uppercase tracking-[0.15em] text-white/40">Team Code</div>
+            <div className="mt-2 font-mono text-3xl font-bold tracking-[0.3em] text-[#d12429]">
+              {team.code}
+            </div>
+          </div>
+
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={copyToClipboard}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#f0dcc6]/20 bg-[#1a1210] px-4 py-3 text-sm font-medium text-white/80 transition-colors hover:bg-[#2a1f1a] hover:text-white"
+            >
+              {copied ? (
+                <>
+                  <svg className="h-4 w-4 text-[#22c55e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copy Invite
+                </>
+              )}
+            </button>
+            <button
+              onClick={shareToTwitter}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1d9bf0] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#1a8cd8]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              Share on X
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ── Spin Result Card Overlay ── */
+function SpinResultCard({
+  isVisible,
+  result,
+  spinAmount,
+  goldEarned,
+  team,
+  contributorRank,
+  rankGap,
+  onClose,
+}: {
+  isVisible: boolean;
+  result: "hit" | "miss";
+  spinAmount: number;
+  goldEarned: number;
+  team: { name: string; totalVolume: number; rank?: number } | null;
+  contributorRank: number;
+  rankGap: number;
+  onClose: () => void;
+}) {
+  if (!isVisible) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className={cn(
+        "absolute inset-x-4 bottom-4 z-20 rounded-2xl border p-4",
+        result === "hit" 
+          ? "border-[#22c55e]/30 bg-[linear-gradient(180deg,rgba(34,197,94,0.15),rgba(20,14,12,0.95))]"
+          : "border-[#dc2626]/20 bg-[linear-gradient(180deg,rgba(220,38,38,0.1),rgba(20,14,12,0.95))]"
+      )}
+    >
+      <button
+        onClick={onClose}
+        className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/60 hover:text-white"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+
+      <div className="flex items-start gap-4">
+        <div className={cn(
+          "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full",
+          result === "hit" ? "bg-[#22c55e]/20" : "bg-[#dc2626]/20"
+        )}>
+          {result === "hit" ? (
+            <svg className="h-6 w-6 text-[#22c55e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6 text-[#dc2626]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+        </div>
+
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-white">+{spinAmount.toLocaleString()} BIRB Played</span>
+            {result === "hit" && (
+              <span className="text-sm font-bold text-[#22c55e]">+{goldEarned.toLocaleString()} Gold</span>
+            )}
+          </div>
+
+          {team && (
+            <>
+              <div className="mt-1 text-sm text-[#d12429]">
+                +{spinAmount.toLocaleString()} Volume to {team.name}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                  #{contributorRank} contributor on your team
+                </span>
+                {team.rank && team.rank > 1 && (
+                  <span className="rounded-full bg-[#d12429]/20 px-2 py-0.5 text-xs text-[#d12429]">
+                    {rankGap.toLocaleString()} BIRB to Rank #{team.rank - 1}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ── Team Leaderboard Sidebar ── */
+function TeamLeaderboard({ 
+  teams, 
+  userTeamId,
+}: { 
+  teams: Team[];
+  userTeamId: string | null;
+}) {
+  const topTeams = teams.slice(0, 5);
+
+  return (
+    <div className="rounded-2xl border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.04),rgba(14,8,6,0.42))] p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">Team Leaderboard</div>
+        <a href="/teams" className="text-xs text-[#d12429] hover:underline">View All</a>
+      </div>
+      
+      <div className="space-y-2">
+        {topTeams.map((team, index) => {
+          const isUserTeam = team.id === userTeamId;
+          return (
+            <div
+              key={team.id}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2 transition-colors",
+                isUserTeam 
+                  ? "border border-[#d12429]/30 bg-[#d12429]/10" 
+                  : "hover:bg-white/5"
+              )}
+            >
+              <div className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
+                index === 0 ? "bg-[#ffd700]/20 text-[#ffd700]" :
+                index === 1 ? "bg-[#c0c0c0]/20 text-[#c0c0c0]" :
+                index === 2 ? "bg-[#cd7f32]/20 text-[#cd7f32]" :
+                "bg-white/10 text-white/50"
+              )}>
+                #{index + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={cn(
+                  "truncate text-sm font-medium",
+                  isUserTeam ? "text-[#ecd9ba]" : "text-white/80"
+                )}>
+                  {team.name}
+                </div>
+                <div className="text-xs text-white/40">
+                  {(team.totalVolume / 1000000).toFixed(2)}M BIRB
+                </div>
+              </div>
+              {isUserTeam && (
+                <span className="rounded bg-[#d12429]/30 px-1.5 py-0.5 text-[10px] font-bold text-[#d12429]">YOU</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -445,9 +787,6 @@ function getGoldRate(picks: number, dayMultiplier: number): string {
   return getGoldRateNum(picks, dayMultiplier).toFixed(2) + "x";
 }
 
-/* ── Deposit / Play State Machine ── */
-type DepositPhase = "deposit" | "receiving" | "ready" | "spinning";
-
 /* ── Day Decay Curve Visualization ── */
 function DayDecayCurve({ currentDay }: { currentDay: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -466,14 +805,12 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
   const currentX = ((currentDay - 1) / 27) * 100;
   const currentY = (1 - getBaseGoldMultiplier(currentDay)) * 100;
 
-  // Calculate actual pixel position for the circle overlay
   useEffect(() => {
     if (svgRef.current) {
       const svg = svgRef.current;
       const rect = svg.getBoundingClientRect();
-      // Map viewBox coordinates to actual pixels
       const pixelX = (currentX / 100) * rect.width;
-      const pixelY = ((currentY + 5) / 110) * rect.height; // Account for viewBox offset
+      const pixelY = ((currentY + 5) / 110) * rect.height;
       setCirclePos({ x: pixelX, y: pixelY });
     }
   }, [currentDay, currentX, currentY]);
@@ -497,7 +834,6 @@ function DayDecayCurve({ currentDay }: { currentDay: number }) {
           </linearGradient>
         </defs>
       </svg>
-      {/* Circle indicator rendered as DOM element to maintain aspect ratio */}
       <div 
         className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#d12429] shadow-[0_0_8px_rgba(209,36,41,0.6)]"
         style={{ left: circlePos.x, top: circlePos.y }}
@@ -575,7 +911,6 @@ function HoloPrism({
         transition={{ duration: isDramaticWin || isGreenWin ? 1.5 : 2.15, ease: [0.12, 0.82, 0.18, 1] }}
       />
       
-      {/* Dramatic win particles */}
       <AnimatePresence>
         {isDramaticWin && (
           <>
@@ -615,15 +950,6 @@ function HoloPrism({
         )}
       </AnimatePresence>
 
-      {/*
-        3D Prism — each face is placed at rotateY(index * 90deg).
-        Face 0 (Birb)    at   0° → faces viewer when container rotateY =   0°
-        Face 1 (Pip)     at  90° → faces viewer when container rotateY = 270° (i.e. -90°)
-        Face 2 (Toobins) at 180° → faces viewer when container rotateY = 180° (i.e. -180°)
-        Face 3 (Zen)     at 270° → faces viewer when container rotateY =  90° (i.e. -270°)
-
-        So to show face N to the viewer: container rotateY = (-N * 90) mod 360 = (360 - N*90) % 360
-      */}
       <div className="relative flex items-center justify-center" style={{ perspective: "1700px" }}>
         <div
           className="relative h-[26rem] w-[26rem]"
@@ -705,7 +1031,11 @@ function HoloPrism({
 }
 
 export default function Page() {
-  const [deposit, setDeposit] = useState("1000");
+  // Balance system (replaces per-spin deposit)
+  const [balance, setBalance] = useState(10000); // Starting balance
+  const [spinAmount, setSpinAmount] = useState(1000);
+  const [showAddFundsModal, setShowAddFundsModal] = useState(false);
+  
   const [selected, setSelected] = useState<Character["id"][]>(["birb"]);
   const [spinning, setSpinning] = useState(false);
   const [spinPhase, setSpinPhase] = useState<"idle" | "spinning" | "done">("idle");
@@ -715,18 +1045,23 @@ export default function Page() {
   const [rotationDeg, setRotationDeg] = useState(0);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [currentDay, setCurrentDay] = useState(1);
-  const [depositPhase, setDepositPhase] = useState<DepositPhase>("deposit");
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showResultCard, setShowResultCard] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   
-  // Lifetime stats (starting values for POC)
+  // Spin streak tracking
+  const [spinStreak, setSpinStreak] = useState(0);
+  
+  // Lifetime stats
   const [totalBirbPlayed, setTotalBirbPlayed] = useState(15478);
   const [allTimeGold, setAllTimeGold] = useState(28814);
-  const [dailyStreak, setDailyStreak] = useState(3); // Starting at day 3 for POC
-  const [totalPlays, setTotalPlays] = useState(10); // Starting with 10 prior plays
-  const [totalWins, setTotalWins] = useState(7); // 7 wins out of 10 = 70% WR
+  const [dailyStreak, setDailyStreak] = useState(3);
+  const [totalPlays, setTotalPlays] = useState(10);
+  const [totalWins, setTotalWins] = useState(7);
 
-  // Team state - loaded from localStorage
+  // Team state
   const [userTeam, setUserTeam] = useState<{ name: string; code: string; totalVolume: number; rank?: number; members: string[] } | null>(null);
+  const [contributorRank, setContributorRank] = useState(12);
   
   // Load team from localStorage on mount
   useEffect(() => {
@@ -738,7 +1073,6 @@ export default function Page() {
         console.error("Failed to parse saved team", e);
       }
     }
-    // Also listen for storage events to sync across tabs
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "birb-team") {
         if (e.newValue) {
@@ -762,7 +1096,6 @@ export default function Page() {
   const { playSpinSound, playWinSound, playLoseSound } = useSoundEffects();
   const { isMuted, toggleMute, volume, handleVolumeChange } = useLofiMusic();
 
-  const depositNum = Math.max(0, Number(deposit) || 0);
   const dayMultiplier = getBaseGoldMultiplier(currentDay);
 
   /* ── Idle slow rotation ── */
@@ -802,27 +1135,12 @@ export default function Page() {
     });
   }
 
-  /* ── Deposit flow: deposit → receiving → ready → spin ── */
-  function handleMainAction() {
-    if (depositPhase === "deposit") {
-      if (depositNum <= 0) return;
-      setDepositPhase("receiving");
-      // Simulate deposit processing
-      setTimeout(() => {
-        setDepositPhase("ready");
-      }, 1800);
-      return;
-    }
-
-    if (depositPhase === "ready") {
-      doSpin();
-      return;
-    }
-  }
-
-  /* ── Spin logic with CORRECT front-face math ── */
+  /* ── Spin logic ── */
   const doSpin = useCallback(() => {
-    if (spinning) return;
+    if (spinning || balance < spinAmount) return;
+
+    // Deduct from balance
+    setBalance((prev) => prev - spinAmount);
 
     const next = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
     const landedIndex = CHARACTERS.findIndex((c) => c.id === next.id);
@@ -832,31 +1150,15 @@ export default function Page() {
     setLanded(next.id);
     setSpinning(true);
     setSpinPhase("spinning");
-    setDepositPhase("spinning");
+    setShowResultCard(false);
     
-    // Play spinning sound
     playSpinSound();
 
     const fullSpins = 3 + Math.floor(Math.random() * 2);
-
-    /*
-      FIX: To show face at index N to the viewer, the container must be at
-      rotateY = -(N * 90) degrees (mod 360).
-      
-      Face 0 at 0°   → container needs 0° (or 360°)
-      Face 1 at 90°  → container needs -90° (or 270°)
-      Face 2 at 180° → container needs -180° (or 180°)
-      Face 3 at 270° → container needs -270° (or 90°)
-      
-      We normalize to a positive target within the full-spin range.
-    */
     const targetFaceAngle = ((360 - landedIndex * 90) % 360);
     const startDeg = rotRef.current;
-    // Normalize current rotation to 0-360 range
     const currentMod = ((startDeg % 360) + 360) % 360;
-    // Calculate target: snap to nearest base, add full spins, land on target face
     const targetDeg = startDeg - currentMod + fullSpins * 360 + targetFaceAngle;
-    // Ensure we always spin forward (positive delta)
     const totalDelta = targetDeg - startDeg > 0 ? targetDeg - startDeg : targetDeg - startDeg + 360;
     const finalTarget = startDeg + totalDelta;
 
@@ -891,23 +1193,23 @@ export default function Page() {
         const isHit = selected.includes(next.id);
         setResult(isHit ? "hit" : "miss");
         
-        // Play win or lose sound
         if (isHit) {
-          // Dramatic sound for single pick win (highest risk)
           playWinSound(selected.length === 1);
+          setSpinStreak((prev) => prev + 1);
         } else {
           playLoseSound();
+          setSpinStreak(0);
         }
 
         const goldEarned = isHit
-          ? (depositNum * currentGoldRate).toFixed(0)
+          ? (spinAmount * currentGoldRate).toFixed(0)
           : "0";
 
         // Update lifetime stats
-        setTotalBirbPlayed((prev) => prev + depositNum);
+        setTotalBirbPlayed((prev) => prev + spinAmount);
         setTotalPlays((prev) => prev + 1);
         if (isHit) {
-          setAllTimeGold((prev) => prev + Math.round(depositNum * currentGoldRate));
+          setAllTimeGold((prev) => prev + Math.round(spinAmount * currentGoldRate));
           setTotalWins((prev) => prev + 1);
         }
 
@@ -915,10 +1217,12 @@ export default function Page() {
         if (userTeam) {
           const updatedTeam = {
             ...userTeam,
-            totalVolume: userTeam.totalVolume + depositNum,
+            totalVolume: userTeam.totalVolume + spinAmount,
           };
           setUserTeam(updatedTeam);
           localStorage.setItem("birb-team", JSON.stringify(updatedTeam));
+          // Update contributor rank (simulate)
+          setContributorRank((prev) => Math.max(1, prev - (isHit ? 1 : 0)));
         }
 
         setLog((prev) => [
@@ -928,18 +1232,18 @@ export default function Page() {
             landed: next.name,
             result: isHit ? "hit" : "miss",
             goldEarned,
-            deposit: depositNum,
+            deposit: spinAmount,
           },
         ]);
 
-        // Reset deposit flow for next round
-        setDepositPhase("deposit");
+        // Show result card
+        setShowResultCard(true);
       }
     }
 
     if (animRef.current) cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(animate);
-  }, [spinning, selected, depositNum, dayMultiplier, playSpinSound, playWinSound, playLoseSound]);
+  }, [spinning, selected, spinAmount, balance, dayMultiplier, playSpinSound, playWinSound, playLoseSound, userTeam]);
 
   function resetLog() {
     setLog([]);
@@ -952,32 +1256,36 @@ export default function Page() {
   const riskColor = selected.length === 1 ? "text-red-400" : selected.length === 2 ? "text-yellow-400" : "text-green-400";
   const riskBorder = selected.length === 1 ? "border-red-400/20 bg-red-500/5" : selected.length === 2 ? "border-yellow-400/20 bg-yellow-500/5" : "border-green-400/20 bg-green-500/5";
 
-  /* ── Button label & style by deposit phase ── */
-  const buttonLabel = {
-    deposit: `Deposit ${depositNum > 0 ? depositNum.toLocaleString() : ""} BIRB`,
-    receiving: "Receiving deposit...",
-    ready: "Spin the Prism",
-    spinning: "Spinning...",
-  }[depositPhase];
+  // Dynamic CTA
+  const canSpin = balance >= spinAmount && !spinning;
+  const ctaLabel = balance === 0 
+    ? "Add Funds to Play" 
+    : !userTeam 
+      ? "Join a Team to Play"
+      : spinning 
+        ? "Spinning..." 
+        : "SPIN FOR YOUR TEAM";
 
-  const buttonDisabled = depositPhase === "receiving" || depositPhase === "spinning" || (depositPhase === "deposit" && depositNum <= 0);
+  // Calculate rank gap
+  const currentTeamRank = userTeam?.rank || 10;
+  const nextRankTeam = MOCK_LEADERBOARD.find((t) => t.rank === currentTeamRank - 1);
+  const rankGap = nextRankTeam ? nextRankTeam.totalVolume - (userTeam?.totalVolume || 0) : 0;
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#090605] text-white">
-      {/* ── Background: red smoke texture ── */}
+      {/* Background */}
       <div className="fixed inset-0">
         <img src="/bg-red.png" alt="" className="h-full w-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,6,5,0.6),rgba(9,6,5,0.3)_40%,rgba(9,6,5,0.85)_100%)]" />
       </div>
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(130,82,52,0.22),transparent_24%),radial-gradient(circle_at_78%_50%,rgba(179,120,76,0.14),transparent_16%),radial-gradient(circle_at_50%_110%,rgba(255,244,232,0.06),transparent_20%)]" />
 
-      {/* ── Toobins art elements ── */}
       <img src="/toobins-r.png" alt="" className="pointer-events-none fixed right-0 top-0 h-auto w-[28rem] object-contain opacity-20 mix-blend-lighten lg:opacity-30" />
 
-      {/* ── Token Rain for Legendary Wins ── */}
       <TokenRain isActive={result === "hit" && selected.length === 1 && spinPhase === "done"} />
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-6 md:px-10">
+        {/* Header with Balance */}
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="birb" className="h-8 w-auto object-contain md:h-10" />
@@ -986,6 +1294,21 @@ export default function Page() {
             </div>
           </div>
           <div className="hidden items-center gap-3 md:flex">
+            {/* Balance Display */}
+            <div className="flex items-center gap-2 rounded-full border border-[#d12429]/30 bg-[#d12429]/10 px-4 py-2 backdrop-blur-md">
+              <img src="/images/birb-token.png" alt="" className="h-5 w-5" />
+              <span className="font-heading text-lg font-bold text-white">{balance.toLocaleString()}</span>
+              <span className="text-xs text-white/50">BIRB</span>
+              <button
+                onClick={() => setShowAddFundsModal(true)}
+                className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#d12429] text-white hover:bg-[#7d050d]"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+
             {/* Music Controls */}
             <div className="flex items-center gap-2 rounded-full border border-[#ecd9ba]/15 bg-black/20 px-3 py-2 backdrop-blur-md">
               <button
@@ -1037,7 +1360,8 @@ export default function Page() {
           </div>
         </header>
 
-        <section className="grid flex-1 gap-10 py-8 lg:grid-cols-2 lg:py-12">
+        <section className="grid flex-1 gap-6 py-8 lg:grid-cols-[1fr_380px] lg:py-12">
+          {/* Left Column: Prism */}
           <div className="order-2 flex flex-col lg:order-1">
             <div className="mb-6 max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#d12429]/30 bg-[#d12429]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ecd9ba]/80">
@@ -1046,15 +1370,15 @@ export default function Page() {
               <h1 className="font-heading text-4xl font-black leading-[0.95] tracking-tight md:text-6xl">
                 Predict the landing.
                 <span className="block bg-gradient-to-r from-white via-[#ecd9ba] to-[#d12429] bg-clip-text text-transparent">
-                  Keep your BIRB.
+                  Win for your team.
                 </span>
               </h1>
               <p className="mt-4 max-w-xl text-base leading-7 text-white/70 md:text-lg">
-                Pick 1–3 faces, spin the prism, and stack Gold when your prediction hits. Risk more for bigger rewards.
+                Pick 1-3 faces, spin the prism, and stack Gold when your prediction hits. Every spin contributes to your team&apos;s volume.
               </p>
             </div>
 
-            {/* ── Prism Container ── */}
+            {/* Prism Container */}
             <div className="relative flex flex-1 items-center justify-center rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_30px_90px_rgba(0,0,0,0.32)] backdrop-blur-xl">
               <AnimatePresence>
                 {flash && (
@@ -1068,7 +1392,6 @@ export default function Page() {
                 )}
               </AnimatePresence>
 
-              {/* Glow on landing - Cream for high risk win, Green for medium/low risk win, Red for miss */}
               <AnimatePresence>
                 {spinPhase === "done" && (
                   <motion.div
@@ -1098,127 +1421,154 @@ export default function Page() {
                 isDramaticWin={result === "hit" && selected.length === 1 && spinPhase === "done"}
                 isGreenWin={result === "hit" && selected.length > 1 && spinPhase === "done"}
               />
+
+              {/* Spin Result Card Overlay */}
+              <AnimatePresence>
+                {showResultCard && result && (
+                  <SpinResultCard
+                    isVisible={showResultCard}
+                    result={result}
+                    spinAmount={spinAmount}
+                    goldEarned={result === "hit" ? Math.round(spinAmount * getGoldRateNum(selected.length, dayMultiplier)) : 0}
+                    team={userTeam}
+                    contributorRank={contributorRank}
+                    rankGap={rankGap}
+                    onClose={() => setShowResultCard(false)}
+                  />
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
-          <div className="order-1 flex flex-col lg:order-2">
+          {/* Right Column: Controls */}
+          <div className="order-1 flex flex-col gap-4 lg:order-2">
+            {/* Team Leaderboard */}
+            <TeamLeaderboard 
+              teams={MOCK_LEADERBOARD} 
+              userTeamId={userTeam ? "user-team" : null} 
+            />
+
+            {/* Right Panel */}
             <div className="flex flex-1 flex-col rounded-[2.2rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.06),rgba(236,217,186,0.02))] p-6 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl md:p-7">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-[0.2em] text-[#ecd9ba]/50">Birb Game 5</div>
                   <div className="mt-1 font-heading text-2xl font-black tracking-tight">Select. Spin. Stack.</div>
                 </div>
+                {/* Spin Streak */}
+                {spinStreak > 0 && (
+                  <div className="flex items-center gap-1.5 rounded-full border border-[#ffd700]/30 bg-[#ffd700]/10 px-3 py-1">
+                    <span className="text-sm font-bold text-[#ffd700]">{spinStreak} Spin Streak</span>
+                  </div>
+                )}
               </div>
 
-              {/* ── Team Status Bar ── */}
+              {/* Team Status Block - Prominent */}
               {userTeam ? (
-                <div className="mb-5 flex items-center justify-between rounded-xl border border-[#d12429]/20 bg-[#d12429]/5 px-4 py-3">
-                  <a href="/teams" className="flex flex-1 items-center gap-3 transition-opacity hover:opacity-80">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d12429]/20">
-                      <svg className="h-4 w-4 text-[#d12429]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-[#ecd9ba]">{userTeam.name}</div>
-                      <div className="text-xs text-[#ecd9ba]/50">
-                        {userTeam.totalVolume.toLocaleString()} BIRB Volume
+                <div className="mb-5 rounded-2xl border border-[#d12429]/30 bg-[linear-gradient(180deg,rgba(209,36,41,0.1),rgba(14,8,6,0.42))] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d12429]/20">
+                        <svg className="h-5 w-5 text-[#d12429]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-heading text-lg font-bold text-white">{userTeam.name}</div>
+                        <div className="flex items-center gap-2 text-xs text-white/50">
+                          <span>{userTeam.totalVolume.toLocaleString()} BIRB Volume</span>
+                          {userTeam.rank && (
+                            <span className={cn(
+                              "rounded-full px-1.5 py-0.5 font-bold",
+                              userTeam.rank <= 3 ? "bg-[#ffd700]/20 text-[#ffd700]" : "bg-[#d12429]/20 text-[#d12429]"
+                            )}>
+                              Rank #{userTeam.rank}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </a>
-                  <div className="flex items-center gap-2">
-                    {userTeam.rank && userTeam.rank <= 10 && (
-                      <span className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-bold",
-                        userTeam.rank <= 3 ? "bg-amber-500/20 text-amber-400" : "bg-[#d12429]/20 text-[#d12429]"
-                      )}>
-                        #{userTeam.rank}
-                      </span>
-                    )}
                     <button
-                      onClick={() => {
-                        setUserTeam(null);
-                        localStorage.removeItem("birb-team");
-                      }}
-                      className="rounded-lg border border-[#ecd9ba]/20 bg-[#ecd9ba]/5 px-2 py-1 text-xs text-[#ecd9ba]/60 transition-colors hover:bg-[#ecd9ba]/10 hover:text-[#ecd9ba]"
+                      onClick={() => setShowInviteModal(true)}
+                      className="rounded-lg border border-[#d12429]/30 bg-[#d12429]/10 px-3 py-1.5 text-xs font-medium text-[#d12429] transition-colors hover:bg-[#d12429]/20"
                     >
-                      Leave
+                      Invite
                     </button>
                   </div>
                 </div>
               ) : (
                 <a
                   href="/teams"
-                  className="mb-5 flex items-center justify-between rounded-xl border border-[#ecd9ba]/10 bg-[#ecd9ba]/5 px-4 py-3 transition-all hover:bg-[#ecd9ba]/10"
+                  className="mb-5 block rounded-2xl border-2 border-dashed border-[#d12429]/40 bg-[#d12429]/5 p-5 text-center transition-all hover:border-[#d12429]/60 hover:bg-[#d12429]/10"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#ecd9ba]/10">
-                      <svg className="h-4 w-4 text-[#ecd9ba]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-[#ecd9ba]">Join a Team</div>
-                      <div className="text-xs text-[#ecd9ba]/50">Compete for Top 10 rewards</div>
-                    </div>
+                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#d12429]/20">
+                    <svg className="h-6 w-6 text-[#d12429]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                    </svg>
                   </div>
-                  <svg className="h-4 w-4 text-[#ecd9ba]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
+                  <div className="font-heading text-lg font-bold text-white">Join or Create a Team to Play</div>
+                  <div className="mt-1 text-sm text-white/50">Compete for Top 10 rewards together</div>
+                  <div className="mt-3 inline-flex gap-2">
+                    <span className="rounded-full bg-[#d12429] px-4 py-1.5 text-sm font-bold text-white">Join Team</span>
+                    <span className="rounded-full border border-[#ecd9ba]/30 px-4 py-1.5 text-sm font-medium text-[#ecd9ba]">Create Team</span>
+                  </div>
                 </a>
               )}
 
-              {/* ── Deposit ── */}
-              <div className={cn(
-                "rounded-[1.6rem] border p-4 shadow-[inset_0_1px_0_rgba(255,245,234,0.04)] transition-colors duration-500",
-                depositPhase === "ready"
-                  ? "border-[#d12429]/20 bg-[linear-gradient(180deg,rgba(209,36,41,0.06),rgba(14,8,6,0.42))]"
-                  : "border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.04),rgba(14,8,6,0.42))]"
-              )}>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-xs uppercase tracking-[0.18em] text-white/45">Deposit Amount</label>
-                  {depositPhase === "receiving" && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] text-[#d4a06c]"
-                    >
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="h-3 w-3 rounded-full border border-[#d4a06c] border-t-transparent"
-                      />
-                      Processing
-                    </motion.div>
-                  )}
-                  {depositPhase === "ready" && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#d12429]"
-                    >
-                      Deposited
-                    </motion.div>
-                  )}
+              {/* Spin Amount Selection */}
+              <div className="rounded-[1.6rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.04),rgba(14,8,6,0.42))] p-4 shadow-[inset_0_1px_0_rgba(255,245,234,0.04)]">
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="text-xs uppercase tracking-[0.18em] text-white/45">Spin Amount</label>
+                  <div className="text-xs text-white/40">Balance: {balance.toLocaleString()} BIRB</div>
                 </div>
-                <div className="relative">
-                  <input
-                    value={deposit}
-                    onChange={(e) => {
-                      setDeposit(e.target.value.replace(/[^\d]/g, ""));
-                      // Reset deposit flow if they change the amount
-                      if (depositPhase === "ready") setDepositPhase("deposit");
+                <div className="grid grid-cols-4 gap-2">
+                  {[500, 1000, 5000].map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => setSpinAmount(amount)}
+                      disabled={balance < amount}
+                      className={cn(
+                        "rounded-xl py-3 text-center text-sm font-bold transition-all",
+                        spinAmount === amount
+                          ? "border border-[#d12429]/30 bg-[#d12429]/20 text-white"
+                          : "border border-[#ecd9ba]/10 bg-[#ecd9ba]/5 text-white/70 hover:bg-[#ecd9ba]/10",
+                        balance < amount && "cursor-not-allowed opacity-40"
+                      )}
+                    >
+                      {amount.toLocaleString()}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const custom = prompt("Enter custom spin amount:");
+                      if (custom) {
+                        const num = parseInt(custom);
+                        if (num > 0 && num <= balance) {
+                          setSpinAmount(num);
+                        }
+                      }
                     }}
-                    disabled={depositPhase === "receiving" || depositPhase === "spinning"}
-                    className="h-14 w-full rounded-2xl border border-[#f0dcc6]/10 bg-white/5 px-4 pr-20 text-xl font-bold text-white outline-none disabled:opacity-50"
-                    placeholder="1000"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-white/60">BIRB</div>
+                    className="rounded-xl border border-[#ecd9ba]/10 bg-[#ecd9ba]/5 py-3 text-center text-sm font-medium text-white/50 transition-all hover:bg-[#ecd9ba]/10"
+                  >
+                    Custom
+                  </button>
+                </div>
+                {/* Quick Add */}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => setShowAddFundsModal(true)}
+                    className="flex items-center gap-1 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 px-2 py-1 text-xs text-[#22c55e] transition-colors hover:bg-[#22c55e]/20"
+                  >
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Funds
+                  </button>
                 </div>
               </div>
 
-              {/* ── Character picks ── */}
-              <div className="mt-5 grid grid-cols-2 gap-3">
+              {/* Character picks */}
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 {CHARACTERS.map((character) => {
                   const active = selected.includes(character.id);
                   return (
@@ -1240,7 +1590,7 @@ export default function Page() {
                       )} />
                       <div className="relative flex items-center gap-3">
                         <div className={cn(
-                          "flex h-16 w-16 items-center justify-center rounded-[1.25rem] border p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md transition-all duration-300",
+                          "flex h-14 w-14 items-center justify-center rounded-[1.25rem] border p-2 shadow-[inset_0_1px_0_rgba(255,245,234,0.06)] backdrop-blur-md transition-all duration-300",
                           active 
                             ? "border-[#c9a86c]/20 bg-[radial-gradient(circle_at_top,rgba(180,145,85,0.18),rgba(35,22,16,0.25))]" 
                             : "border-[#f0dcc6]/8 bg-[radial-gradient(circle_at_top,rgba(80,55,40,0.3),rgba(28,17,12,0.5))]"
@@ -1258,20 +1608,20 @@ export default function Page() {
                         </div>
                         <div>
                           <div className={cn(
-                            "text-base font-bold transition-colors duration-300",
+                            "text-sm font-bold transition-colors duration-300",
                             active ? "text-white" : "text-white/50"
                           )}>{character.name}</div>
                           <div className={cn(
-                            "text-xs uppercase tracking-[0.18em] transition-colors duration-300",
+                            "text-[10px] uppercase tracking-[0.18em] transition-colors duration-300",
                             active ? "text-[#c9a86c]" : "text-white/30"
                           )}>
                             {active ? "Selected" : "Tap to select"}
                           </div>
                         </div>
                         {active && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#c9a86c] text-[#1a1510]">
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#c9a86c] text-[#1a1510]">
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
@@ -1283,51 +1633,18 @@ export default function Page() {
                 })}
               </div>
 
-              {/* ── Day Decay Slider ── */}
-              <div className="mt-5 rounded-[1.6rem] border border-[#d12429]/15 bg-[linear-gradient(180deg,rgba(209,36,41,0.04),rgba(14,8,6,0.42))] p-4 shadow-[inset_0_1px_0_rgba(209,36,41,0.06)]">
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-xs uppercase tracking-[0.18em] text-white/45">Gold Rate Decay</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/35">Day</span>
-                    <span className="font-heading text-lg font-black text-[#d12429]">{currentDay}</span>
-                    <span className="text-xs text-white/35">/ 28</span>
-                  </div>
-                </div>
-                <DayDecayCurve currentDay={currentDay} />
-                <div className="mt-2 flex items-center gap-3">
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-white/30">1</span>
-                  <input
-                    type="range"
-                    min={1}
-                    max={28}
-                    value={currentDay}
-                    onChange={(e) => setCurrentDay(Number(e.target.value))}
-                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/10 accent-[#d12429] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429] [&::-webkit-slider-thumb]:shadow-[0_0_12px_rgba(209,36,41,0.4)]"
-                  />
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-white/30">28</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <div className="text-white/40">
-                    Boost: <span className="font-bold text-[#d12429]">{(dayMultiplier * 100).toFixed(0)}%</span>
-                  </div>
-                  <div className="text-white/30">
-                    {currentDay === 1 ? "Peak early-bird bonus" : currentDay <= 7 ? "Strong early bonus" : currentDay <= 14 ? "Bonus decaying" : currentDay <= 21 ? "Moderate bonus" : "Floor rate — still rewarding"}
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Stats ── */}
-              <div className="mt-5 grid grid-cols-4 gap-2">
+              {/* Stats Row */}
+              <div className="mt-4 grid grid-cols-4 gap-2">
                 {[
                   { label: "Hit", value: hitChance },
                   { label: "Rate", value: goldRate, highlight: true },
                   { label: "Risk", value: riskLevel, isRisk: true },
-                  { label: "Amt", value: `${depositNum || 0}` },
+                  { label: "Spin", value: `${spinAmount.toLocaleString()}` },
                 ].map((item) => (
                   <div
                     key={item.label}
                     className={cn(
-                      "rounded-xl border px-2 py-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)]",
+                      "rounded-xl border px-2 py-2 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)]",
                       "highlight" in item && item.highlight
                         ? "border-[#d12429]/15 bg-[linear-gradient(180deg,rgba(209,36,41,0.06),rgba(236,217,186,0.02))]"
                         : "isRisk" in item && item.isRisk
@@ -1335,9 +1652,9 @@ export default function Page() {
                           : "border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(255,248,240,0.05),rgba(255,244,235,0.02))]"
                     )}
                   >
-                    <div className="text-[9px] uppercase tracking-[0.15em] text-white/45">{item.label}</div>
+                    <div className="text-[8px] uppercase tracking-[0.15em] text-white/45">{item.label}</div>
                     <div className={cn(
-                      "mt-1 font-heading text-base font-bold leading-tight",
+                      "mt-0.5 font-heading text-sm font-bold leading-tight",
                       "highlight" in item && item.highlight && "text-[#d12429]",
                       "isRisk" in item && item.isRisk && riskColor
                     )}>
@@ -1347,48 +1664,66 @@ export default function Page() {
                 ))}
               </div>
 
-              {/* ── Info callout — red/brown instead of green ── */}
-              <div className="mt-5 rounded-[1.5rem] border border-[#d4a06c]/20 bg-[#d4a06c]/10 p-4 text-sm text-[#f0dcc6]">
-                Principal returned at month end. You are risking conversion efficiency, not deposited BIRB.
-              </div>
+              {/* Day Decay - Collapsed */}
+              <details className="mt-4 rounded-xl border border-[#d12429]/15 bg-[linear-gradient(180deg,rgba(209,36,41,0.04),rgba(14,8,6,0.42))]">
+                <summary className="cursor-pointer p-3 text-xs uppercase tracking-[0.15em] text-white/45">
+                  Gold Rate Decay (Day {currentDay}/28)
+                </summary>
+                <div className="px-3 pb-3">
+                  <DayDecayCurve currentDay={currentDay} />
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="text-[10px] uppercase tracking-[0.15em] text-white/30">1</span>
+                    <input
+                      type="range"
+                      min={1}
+                      max={28}
+                      value={currentDay}
+                      onChange={(e) => setCurrentDay(Number(e.target.value))}
+                      className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/10 accent-[#d12429] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429] [&::-webkit-slider-thumb]:shadow-[0_0_12px_rgba(209,36,41,0.4)]"
+                    />
+                    <span className="text-[10px] uppercase tracking-[0.15em] text-white/30">28</span>
+                  </div>
+                  <div className="mt-2 text-xs text-white/40">
+                    Boost: <span className="font-bold text-[#d12429]">{(dayMultiplier * 100).toFixed(0)}%</span>
+                  </div>
+                </div>
+              </details>
 
-              {/* Spacer to push button to bottom */}
+              {/* Spacer */}
               <div className="flex-1 min-h-4" />
 
-              {/* ── Main action button with deposit flow ── */}
+              {/* CTA Button */}
               <button
-                onClick={handleMainAction}
-                disabled={buttonDisabled}
+                onClick={() => {
+                  if (balance === 0) {
+                    setShowAddFundsModal(true);
+                  } else if (!userTeam) {
+                    window.location.href = "/teams";
+                  } else {
+                    doSpin();
+                  }
+                }}
+                disabled={spinning || (userTeam && balance < spinAmount)}
                 className={cn(
-                  "mt-5 h-14 w-full rounded-2xl font-heading text-base font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50",
-                  depositPhase === "ready"
+                  "mt-4 h-14 w-full rounded-2xl font-heading text-base font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50",
+                  userTeam && canSpin
                     ? "bg-[linear-gradient(135deg,#7d050d,#d12429)] hover:brightness-110 shadow-[0_0_24px_rgba(209,36,41,0.3)]"
-                    : depositPhase === "receiving"
-                      ? "bg-[#1e1a34]"
-                      : "bg-[#d12429] hover:bg-[#7d050d]"
+                    : "bg-[#d12429] hover:bg-[#7d050d]"
                 )}
               >
-                {depositPhase === "receiving" ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <motion.span
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="inline-block h-4 w-4 rounded-full border-2 border-white/40 border-t-white"
-                    />
-                    Receiving deposit...
-                  </span>
-                ) : (
-                  buttonLabel
-                )}
+                {ctaLabel}
               </button>
+              <p className="mt-2 text-center text-[10px] text-white/40">
+                Each spin contributes to your team&apos;s rank
+              </p>
             </div>
           </div>
         </section>
 
-        {/* ── Outcome and History - Horizontal Section ── */}
+        {/* Outcome and History Section */}
         <section className="relative mx-auto w-full max-w-7xl px-0 pb-8">
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* ── Outcome Panel ── */}
+            {/* Outcome Panel */}
             <AnimatePresence mode="wait">
               {result ? (
                 <motion.div
@@ -1406,7 +1741,6 @@ export default function Page() {
                         : "border-[#dc2626]/20 bg-[linear-gradient(180deg,rgba(220,38,38,0.08),rgba(20,14,12,0.95))]"
                   )}
                 >
-                  {/* Radial glow overlay */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: [0, 0.5, 0.25] }}
@@ -1420,7 +1754,6 @@ export default function Page() {
                           : "bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.18),transparent_60%)]"
                     )}
                   />
-                  {/* Decorative owl logo watermark on right */}
                   <img 
                     src="/images/birblogo-transparent.png" 
                     alt="" 
@@ -1445,12 +1778,11 @@ export default function Page() {
                           "ml-1 font-bold",
                           selected.length === 1 ? "text-[#ffd700]" : "text-[#22c55e]"
                         )}>
-                          +{(depositNum * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
+                          +{(spinAmount * getGoldRateNum(selected.length, dayMultiplier)).toFixed(0)} Gold
                         </span>
                       )}
                     </div>
                   </div>
-                  {/* Share button - only on hits, positioned absolutely */}
                   {result === "hit" && (
                     <button
                       onClick={() => setShowShareModal(true)}
@@ -1488,10 +1820,10 @@ export default function Page() {
               )}
             </AnimatePresence>
 
-            {/* ── Right Column: Stats + History ── */}
+            {/* Right Column: Stats + History */}
             <div className="flex flex-col gap-4">
-              {/* ── Player Stats Bar ── */}
-              <div className="flex items-center justify-center gap-2">
+              {/* Player Stats Bar */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 {/* Daily Streak */}
                 <div className="flex items-center gap-1.5 rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/5 px-2.5 py-1.5">
                   <div className="flex items-center gap-0.5">
@@ -1533,98 +1865,116 @@ export default function Page() {
                     <polyline points="16 7 22 7 22 13" />
                   </svg>
                   <span className="text-[10px] uppercase tracking-wider text-[#8b5cf6]/50">WR</span>
-                  <span className="text-xs font-bold text-[#8b5cf6]">{Math.round((totalWins / totalPlays) * 100)}%</span>
+                  <span className="text-xs font-bold text-[#8b5cf6]">{totalPlays > 0 ? Math.round((totalWins / totalPlays) * 100) : 0}%</span>
                 </div>
               </div>
 
-              {/* ── History Panel ── */}
+              {/* History Panel */}
               <div className="relative flex-1 overflow-hidden rounded-[2rem] border border-[#f0dcc6]/10 bg-[linear-gradient(180deg,rgba(20,14,12,0.95),rgba(14,8,6,0.98))] p-5">
-              {/* Decorative owl logo watermark */}
-              <img 
-                src="/images/birblogo-transparent.png" 
-                alt="" 
-                className="pointer-events-none absolute -right-4 bottom-0 h-32 w-auto object-contain opacity-25"
-              />
-              <div className="relative z-10 mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
-                  {log.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm font-bold">
-                      <span className="text-[#ecd9ba]">{log.filter((l) => l.result === "hit").length}W</span>
-                      <span className="text-white/25">·</span>
-                      <span className="text-white/45">{log.filter((l) => l.result === "miss").length}L</span>
-                    </div>
-                  )}
-                </div>
-                {log.length > 0 && (
-                  <button
-                    onClick={resetLog}
-                    className="rounded-full border border-white/20 bg-white/[0.03] px-4 py-1.5 text-[11px] font-medium text-white/60 transition hover:border-white/35 hover:bg-white/[0.06] hover:text-white/90"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-              {log.length === 0 ? (
-                <div className="flex h-20 items-center justify-center text-sm text-white/30">
-                  No plays yet
-                </div>
-              ) : (
-                <div className="relative">
-                  <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
-                    {[...log].reverse().map((entry, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "flex-shrink-0 min-w-[100px] rounded-xl border px-4 py-3",
-                          entry.result === "hit"
-                            ? "border-[#ecd9ba]/25 bg-[#ecd9ba]/[0.08]"
-                            : "border-white/10 bg-white/[0.02]"
-                        )}
-                      >
-                        <div className="flex items-center gap-2 text-[10px] text-white/45 mb-1.5">
-                          <span className="font-medium">#{log.length - i}</span>
-                          <span className="text-white/30">{entry.picks.join(", ")}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-white/60">{entry.landed}</span>
-                          {entry.result === "hit" ? (
-                            <span className="text-sm font-bold text-[#ecd9ba]">
-                              +{entry.goldEarned}
-                            </span>
-                          ) : (
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/70">
-                              MISS
-                            </span>
-                          )}
-                        </div>
+                <img 
+                  src="/images/birblogo-transparent.png" 
+                  alt="" 
+                  className="pointer-events-none absolute -right-4 bottom-0 h-32 w-auto object-contain opacity-25"
+                />
+                <div className="relative z-10 mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">History</div>
+                    {log.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm font-bold">
+                        <span className="text-[#ecd9ba]">{log.filter((l) => l.result === "hit").length}W</span>
+                        <span className="text-white/25">·</span>
+                        <span className="text-white/45">{log.filter((l) => l.result === "miss").length}L</span>
                       </div>
-                    ))}
+                    )}
                   </div>
-                  {/* Scroll indicators */}
-                  {log.length > 4 && (
-                    <>
-                      <div className="pointer-events-none absolute left-0 top-0 bottom-3 w-6 bg-gradient-to-r from-[#140e0c] to-transparent" />
-                      <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-6 bg-gradient-to-l from-[#140e0c] to-transparent" />
-                    </>
+                  {log.length > 0 && (
+                    <button
+                      onClick={resetLog}
+                      className="rounded-full border border-white/20 bg-white/[0.03] px-4 py-1.5 text-[11px] font-medium text-white/60 transition hover:border-white/35 hover:bg-white/[0.06] hover:text-white/90"
+                    >
+                      Reset
+                    </button>
                   )}
                 </div>
-              )}
+                {log.length === 0 ? (
+                  <div className="flex h-20 items-center justify-center text-sm text-white/30">
+                    No plays yet
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+                      {[...log].reverse().map((entry, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "flex-shrink-0 min-w-[100px] rounded-xl border px-4 py-3",
+                            entry.result === "hit"
+                              ? "border-[#ecd9ba]/25 bg-[#ecd9ba]/[0.08]"
+                              : "border-white/10 bg-white/[0.02]"
+                          )}
+                        >
+                          <div className="flex items-center gap-2 text-[10px] text-white/45 mb-1.5">
+                            <span className="font-medium">#{log.length - i}</span>
+                            <span className="text-white/30">{entry.picks.join(", ")}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-white/60">{entry.landed}</span>
+                            {entry.result === "hit" ? (
+                              <span className="text-sm font-bold text-[#ecd9ba]">
+                                +{entry.goldEarned}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/70">
+                                MISS
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {log.length > 4 && (
+                      <>
+                        <div className="pointer-events-none absolute left-0 top-0 bottom-3 w-6 bg-gradient-to-r from-[#140e0c] to-transparent" />
+                        <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-6 bg-gradient-to-l from-[#140e0c] to-transparent" />
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </section>
       </div>
 
-      {/* Share Modal */}
+      {/* Modals */}
       <AnimatePresence>
         {showShareModal && result === "hit" && (
           <ShareModal
             isOpen={showShareModal}
             onClose={() => setShowShareModal(false)}
-            birbDeposit={depositNum}
-            goldEarned={Math.round(depositNum * getGoldRateNum(selected.length, dayMultiplier))}
+            birbDeposit={spinAmount}
+            goldEarned={Math.round(spinAmount * getGoldRateNum(selected.length, dayMultiplier))}
             riskLevel={selected.length === 1 ? "High" : selected.length === 2 ? "Medium" : "Low"}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAddFundsModal && (
+          <AddFundsModal
+            isOpen={showAddFundsModal}
+            onClose={() => setShowAddFundsModal(false)}
+            onAddFunds={(amount) => setBalance((prev) => prev + amount)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showInviteModal && userTeam && (
+          <TeamInviteModal
+            isOpen={showInviteModal}
+            onClose={() => setShowInviteModal(false)}
+            team={userTeam}
           />
         )}
       </AnimatePresence>
