@@ -1338,7 +1338,7 @@ export default function Page() {
         <img src="/bg-red.png" alt="" className="h-full w-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,6,5,0.6),rgba(9,6,5,0.3)_40%,rgba(9,6,5,0.85)_100%)]" />
       </div>
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(130,82,52,0.22),transparent_24%),radial-gradient(circle_at_78%_50%,rgba(179,120,76,0.14),transparent_16%),radial-gradient(circle_at_50%_110%,rgba(255,244,232,0.06),transparent_20%)]" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_20%,rgba(130,82,52,0.28),transparent_50%),radial-gradient(ellipse_100%_100%_at_70%_50%,rgba(179,120,76,0.18),transparent_45%),radial-gradient(ellipse_140%_60%_at_50%_100%,rgba(255,244,232,0.1),transparent_40%),radial-gradient(circle_at_30%_70%,rgba(209,36,41,0.08),transparent_35%)]" />
 
       <img src="/toobins-r.png" alt="" className="pointer-events-none fixed right-0 top-0 h-auto w-[28rem] object-contain opacity-20 mix-blend-lighten lg:opacity-30" />
 
@@ -1642,6 +1642,15 @@ export default function Page() {
                           : "border-[#f0dcc6]/8 bg-[linear-gradient(180deg,rgba(40,30,25,0.5),rgba(18,10,8,0.6))] hover:border-[#f0dcc6]/15 hover:bg-[rgba(40,30,25,0.7)]"
                       )}
                     >
+                      {/* Selected badge - positioned at top right */}
+                      {active && (
+                        <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-[#c9a86c]/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#1a1510]">
+                          <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Selected
+                        </div>
+                      )}
                       <div className={cn(
                         "absolute inset-0 transition-opacity duration-300",
                         active 
@@ -1667,24 +1676,15 @@ export default function Page() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={cn(
-                              "text-sm font-bold transition-colors duration-300",
-                              active ? "text-white" : "text-white/50"
-                            )}>{character.name}</span>
-                            {active && (
-                              <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#c9a86c] text-[#1a1510]">
-                                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
+                          <span className={cn(
+                            "text-sm font-bold transition-colors duration-300 block",
+                            active ? "text-white" : "text-white/50"
+                          )}>{character.name}</span>
                           <div className={cn(
                             "text-[10px] uppercase tracking-[0.18em] transition-colors duration-300",
                             active ? "text-[#c9a86c]" : "text-white/30"
                           )}>
-                            {active ? "Selected" : "Tap to select"}
+                            {active ? "" : "Tap to select"}
                           </div>
                         </div>
                       </div>

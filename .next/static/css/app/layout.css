@@ -927,6 +927,9 @@ video {
 .right-2 {
   right: 0.5rem;
 }
+.top-2 {
+  top: 0.5rem;
+}
 .z-10 {
   z-index: 10;
 }
@@ -1456,6 +1459,9 @@ video {
 .border-\[\#22c55e\]\/40 {
   border-color: rgb(34 197 94 / 0.4);
 }
+.border-yellow-500\/30 {
+  border-color: rgb(234 179 8 / 0.3);
+}
 .border-t-transparent {
   border-top-color: transparent;
 }
@@ -1616,6 +1622,15 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(34 197 94 / var(--tw-bg-opacity, 1));
 }
+.bg-\[\#c9a86c\]\/90 {
+  background-color: rgb(201 168 108 / 0.9);
+}
+.bg-yellow-500\/10 {
+  background-color: rgb(234 179 8 / 0.1);
+}
+.bg-yellow-500\/20 {
+  background-color: rgb(234 179 8 / 0.2);
+}
 .bg-\[linear-gradient\(135deg\2c \#7d050d\2c \#d12429\)\] {
   background-image: linear-gradient(135deg,#7d050d,#d12429);
 }
@@ -1741,6 +1756,9 @@ video {
 }
 .bg-\[linear-gradient\(180deg\2c rgba\(34\2c 197\2c 94\2c 0\.15\)\2c rgba\(20\2c 14\2c 12\2c 0\.95\)\)\] {
   background-image: linear-gradient(180deg,rgba(34,197,94,0.15),rgba(20,14,12,0.95));
+}
+.bg-\[radial-gradient\(ellipse_120\%_80\%_at_50\%_20\%\2c rgba\(130\2c 82\2c 52\2c 0\.28\)\2c transparent_50\%\)\2c radial-gradient\(ellipse_100\%_100\%_at_70\%_50\%\2c rgba\(179\2c 120\2c 76\2c 0\.18\)\2c transparent_45\%\)\2c radial-gradient\(ellipse_140\%_60\%_at_50\%_100\%\2c rgba\(255\2c 244\2c 232\2c 0\.1\)\2c transparent_40\%\)\2c radial-gradient\(circle_at_30\%_70\%\2c rgba\(209\2c 36\2c 41\2c 0\.08\)\2c transparent_35\%\)\] {
+  background-image: radial-gradient(ellipse 120% 80% at 50% 20%,rgba(130,82,52,0.28),transparent 50%),radial-gradient(ellipse 100% 100% at 70% 50%,rgba(179,120,76,0.18),transparent 45%),radial-gradient(ellipse 140% 60% at 50% 100%,rgba(255,244,232,0.1),transparent 40%),radial-gradient(circle at 30% 70%,rgba(209,36,41,0.08),transparent 35%);
 }
 .from-\[\#140e0c\] {
   --tw-gradient-from: #140e0c var(--tw-gradient-from-position);
@@ -2233,6 +2251,10 @@ video {
 .text-\[\#ecd9ba\]\/70 {
   color: rgb(236 217 186 / 0.7);
 }
+.text-yellow-500 {
+  --tw-text-opacity: 1;
+  color: rgb(234 179 8 / var(--tw-text-opacity, 1));
+}
 .antialiased {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -2600,6 +2622,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 .hover\:bg-white\/5:hover {
   background-color: rgb(255 255 255 / 0.05);
+}
+
+.hover\:bg-yellow-500\/20:hover {
+  background-color: rgb(234 179 8 / 0.2);
 }
 
 .hover\:text-\[\#ecd9ba\]:hover {
