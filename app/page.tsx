@@ -925,10 +925,10 @@ function HoloPrism({
   isGreenWin: boolean;
 }) {
   return (
-    <div className="relative flex h-[34rem] w-full items-center justify-center overflow-hidden">
+    <div className="relative flex h-[42rem] w-full items-center justify-center">
       <motion.div
         className={cn(
-          "absolute h-[36rem] w-[36rem] rounded-full blur-3xl",
+          "absolute h-[52rem] w-[52rem] rounded-full blur-[80px]",
           isDramaticWin 
             ? "bg-[#ffd700]/45" 
             : isGreenWin 
@@ -950,14 +950,14 @@ function HoloPrism({
       />
       <motion.div
         className={cn(
-          "absolute h-[24rem] w-[24rem] rounded-full blur-3xl",
+          "absolute h-[38rem] w-[38rem] rounded-full blur-[60px]",
           isDramaticWin 
             ? "bg-[#ffec8b]/35" 
             : isGreenWin 
               ? "bg-[#86efac]/15" 
               : result === "miss" && spinPhase === "done" 
                 ? "bg-[#b91c1c]/15" 
-                : "bg-[#d39a66]/10"
+                : "bg-[#d39a66]/12"
         )}
         animate={
           isDramaticWin
@@ -996,7 +996,7 @@ function HoloPrism({
           </>
         )}
       </AnimatePresence>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,242,226,0.12),transparent_16%),radial-gradient(circle_at_50%_86%,rgba(120,74,46,0.15),transparent_24%)]" />
+      <div className="absolute inset-[-8rem] bg-[radial-gradient(ellipse_80%_50%_at_50%_10%,rgba(255,242,226,0.14),transparent_45%),radial-gradient(ellipse_80%_50%_at_50%_90%,rgba(120,74,46,0.18),transparent_45%)]" />
 
       <AnimatePresence>
         {isSpinning && (
@@ -1005,7 +1005,7 @@ function HoloPrism({
             animate={{ opacity: [0, 0.28, 0.14, 0] }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.05, times: [0, 0.18, 0.56, 1] }}
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,245,233,0.18),transparent_24%)]"
+            className="pointer-events-none absolute inset-[-8rem] bg-[radial-gradient(ellipse_60%_60%_at_center,rgba(255,245,233,0.2),transparent_50%)]"
           />
         )}
       </AnimatePresence>
