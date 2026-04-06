@@ -1094,6 +1094,7 @@ export default function Page() {
   // Balance system (replaces per-spin deposit)
   const [balance, setBalance] = useState(10000); // Starting balance
   const [spinAmount, setSpinAmount] = useState(1000);
+  const [spinInputValue, setSpinInputValue] = useState("1000"); // Separate state for free typing
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
   
   const [selected, setSelected] = useState<Character["id"][]>(["birb"]);
@@ -1592,7 +1593,11 @@ export default function Page() {
                       max={balance}
                       step={100}
                       value={Math.min(spinAmount, balance)}
-                      onChange={(e) => setSpinAmount(parseInt(e.target.value))}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        setSpinAmount(val);
+                        setSpinInputValue(val.toString());
+                      }}
                       className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#ecd9ba]/10 accent-[#d12429] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429] [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)] [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#d12429] [&::-moz-range-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)]"
                       style={{
                         background: `linear-gradient(to right, #d12429 0%, #d12429 ${((Math.min(spinAmount, balance) - 100) / (balance - 100)) * 100}%, rgba(236,217,186,0.1) ${((Math.min(spinAmount, balance) - 100) / (balance - 100)) * 100}%, rgba(236,217,186,0.1) 100%)`
@@ -1608,23 +1613,29 @@ export default function Page() {
                   {/* Input Field */}
                   <div className="relative">
                     <input
-                      type="number"
-                      min={100}
-                      max={balance}
-                      value={spinAmount}
+                      type="text"
+                      inputMode="numeric"
+                      value={spinInputValue}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        if (val >= 0 && val <= balance) {
-                          setSpinAmount(val);
-                        } else if (val > balance) {
-                          setSpinAmount(balance);
-                        }
+                        // Allow free typing - only numbers
+                        const raw = e.target.value.replace(/[^0-9]/g, "");
+                        setSpinInputValue(raw);
+                        // Update actual spin amount as they type
+                        const val = parseInt(raw) || 0;
+                        setSpinAmount(Math.min(val, balance));
                       }}
-                      onBlur={(e) => {
-                        const val = parseInt(e.target.value) || 100;
-                        setSpinAmount(Math.max(100, Math.min(val, balance)));
+                      onBlur={() => {
+                        // On blur, enforce minimum and sync display
+                        const val = parseInt(spinInputValue) || 0;
+                        const clamped = Math.max(0, Math.min(val, balance));
+                        setSpinAmount(clamped);
+                        setSpinInputValue(clamped.toString());
                       }}
-                      className="w-24 rounded-xl border border-[#ecd9ba]/20 bg-[#1a1510] px-3 py-2.5 text-center text-sm font-bold text-white outline-none transition-colors focus:border-[#d12429]/50 focus:ring-1 focus:ring-[#d12429]/30 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      onFocus={(e) => {
+                        // Select all text on focus for easy replacement
+                        e.target.select();
+                      }}
+                      className="w-24 rounded-xl border border-[#ecd9ba]/20 bg-[#1a1510] px-3 py-2.5 text-center text-sm font-bold text-white outline-none transition-colors focus:border-[#d12429]/50 focus:ring-1 focus:ring-[#d12429]/30"
                     />
                     <div className="absolute -bottom-4 left-0 right-0 text-center text-[10px] text-white/30">BIRB</div>
                   </div>
@@ -1636,7 +1647,11 @@ export default function Page() {
                     {[25, 50, 75, 100].map((pct) => (
                       <button
                         key={pct}
-                        onClick={() => setSpinAmount(Math.max(100, Math.floor((balance * pct) / 100)))}
+                        onClick={() => {
+                          const val = Math.max(0, Math.floor((balance * pct) / 100));
+                          setSpinAmount(val);
+                          setSpinInputValue(val.toString());
+                        }}
                         className={cn(
                           "rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all",
                           spinAmount === Math.floor((balance * pct) / 100)
