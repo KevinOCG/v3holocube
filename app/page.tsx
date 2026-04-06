@@ -1096,6 +1096,17 @@ export default function Page() {
   const [spinAmount, setSpinAmount] = useState(1000);
   const [spinInputValue, setSpinInputValue] = useState("1000"); // Separate state for free typing
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
+
+  // Sync spin amount when balance changes (e.g., after spending)
+  useEffect(() => {
+    if (balance === 0) {
+      setSpinAmount(0);
+      setSpinInputValue("0");
+    } else if (spinAmount > balance) {
+      setSpinAmount(balance);
+      setSpinInputValue(balance.toString());
+    }
+  }, [balance, spinAmount]);
   
   const [selected, setSelected] = useState<Character["id"][]>(["birb"]);
   const [spinning, setSpinning] = useState(false);
@@ -1580,99 +1591,129 @@ export default function Page() {
               <div className="rounded-[1.6rem] border border-[#ecd9ba]/10 bg-[linear-gradient(180deg,rgba(236,217,186,0.04),rgba(14,8,6,0.42))] p-4 shadow-[inset_0_1px_0_rgba(255,245,234,0.04)]">
                 <div className="mb-3 flex items-center justify-between">
                   <label className="text-xs uppercase tracking-[0.18em] text-white/45">Spin Amount</label>
-                  <div className="text-xs text-white/40">Balance: {balance.toLocaleString()} BIRB</div>
+                  <div className={cn(
+                    "text-xs",
+                    balance === 0 ? "text-[#d12429]" : "text-white/40"
+                  )}>
+                    Balance: {balance.toLocaleString()} BIRB
+                  </div>
                 </div>
                 
-                {/* Slider + Input Row */}
-                <div className="flex items-center gap-3">
-                  {/* Slider */}
-                  <div className="relative flex-1">
-                    <input
-                      type="range"
-                      min={100}
-                      max={balance}
-                      step={100}
-                      value={Math.min(spinAmount, balance)}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        setSpinAmount(val);
-                        setSpinInputValue(val.toString());
-                      }}
-                      className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#ecd9ba]/10 accent-[#d12429] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429] [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)] [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#d12429] [&::-moz-range-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)]"
-                      style={{
-                        background: `linear-gradient(to right, #d12429 0%, #d12429 ${((Math.min(spinAmount, balance) - 100) / (balance - 100)) * 100}%, rgba(236,217,186,0.1) ${((Math.min(spinAmount, balance) - 100) / (balance - 100)) * 100}%, rgba(236,217,186,0.1) 100%)`
-                      }}
-                    />
-                    {/* Min/Max labels */}
-                    <div className="mt-1 flex justify-between text-[10px] text-white/30">
-                      <span>100</span>
-                      <span>{balance.toLocaleString()}</span>
+                {balance === 0 ? (
+                  /* Empty Balance State */
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#d12429]/10">
+                      <svg className="h-6 w-6 text-[#d12429]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
                     </div>
+                    <p className="mb-3 text-sm text-white/50">No balance remaining</p>
+                    <button
+                      onClick={() => setShowAddFundsModal(true)}
+                      className="flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all hover:bg-[#16a34a] hover:shadow-[0_0_25px_rgba(34,197,94,0.4)]"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Funds to Play
+                    </button>
                   </div>
-                  
-                  {/* Input Field */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={spinInputValue}
-                      onChange={(e) => {
-                        // Allow free typing - only numbers
-                        const raw = e.target.value.replace(/[^0-9]/g, "");
-                        setSpinInputValue(raw);
-                        // Update actual spin amount as they type
-                        const val = parseInt(raw) || 0;
-                        setSpinAmount(Math.min(val, balance));
-                      }}
-                      onBlur={() => {
-                        // On blur, enforce minimum and sync display
-                        const val = parseInt(spinInputValue) || 0;
-                        const clamped = Math.max(0, Math.min(val, balance));
-                        setSpinAmount(clamped);
-                        setSpinInputValue(clamped.toString());
-                      }}
-                      onFocus={(e) => {
-                        // Select all text on focus for easy replacement
-                        e.target.select();
-                      }}
-                      className="w-24 rounded-xl border border-[#ecd9ba]/20 bg-[#1a1510] px-3 py-2.5 text-center text-sm font-bold text-white outline-none transition-colors focus:border-[#d12429]/50 focus:ring-1 focus:ring-[#d12429]/30"
-                    />
-                    <div className="absolute -bottom-4 left-0 right-0 text-center text-[10px] text-white/30">BIRB</div>
-                  </div>
-                </div>
-                
-                {/* Quick presets + Add Funds */}
-                <div className="mt-5 flex items-center justify-between">
-                  <div className="flex gap-1.5">
-                    {[25, 50, 75, 100].map((pct) => (
+                ) : (
+                  <>
+                    {/* Slider + Input Row */}
+                    <div className="flex items-center gap-3">
+                      {/* Slider */}
+                      <div className="relative flex-1">
+                        <input
+                          type="range"
+                          min={0}
+                          max={balance}
+                          step={Math.max(1, Math.floor(balance / 100))}
+                          value={Math.min(spinAmount, balance)}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            setSpinAmount(val);
+                            setSpinInputValue(val.toString());
+                          }}
+                          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#ecd9ba]/10 accent-[#d12429] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#d12429] [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)] [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#d12429] [&::-moz-range-thumb]:shadow-[0_0_10px_rgba(209,36,41,0.5)]"
+                          style={{
+                            background: balance > 0 
+                              ? `linear-gradient(to right, #d12429 0%, #d12429 ${(Math.min(spinAmount, balance) / balance) * 100}%, rgba(236,217,186,0.1) ${(Math.min(spinAmount, balance) / balance) * 100}%, rgba(236,217,186,0.1) 100%)`
+                              : 'rgba(236,217,186,0.1)'
+                          }}
+                        />
+                        {/* Min/Max labels */}
+                        <div className="mt-1 flex justify-between text-[10px] text-white/30">
+                          <span>0</span>
+                          <span>{balance.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Input Field */}
+                      <div className="relative">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={spinInputValue}
+                          onChange={(e) => {
+                            // Allow free typing - only numbers
+                            const raw = e.target.value.replace(/[^0-9]/g, "");
+                            setSpinInputValue(raw);
+                            // Update actual spin amount as they type
+                            const val = parseInt(raw) || 0;
+                            setSpinAmount(Math.min(val, balance));
+                          }}
+                          onBlur={() => {
+                            // On blur, enforce minimum and sync display
+                            const val = parseInt(spinInputValue) || 0;
+                            const clamped = Math.max(0, Math.min(val, balance));
+                            setSpinAmount(clamped);
+                            setSpinInputValue(clamped.toString());
+                          }}
+                          onFocus={(e) => {
+                            // Select all text on focus for easy replacement
+                            e.target.select();
+                          }}
+                          className="w-24 rounded-xl border border-[#ecd9ba]/20 bg-[#1a1510] px-3 py-2.5 text-center text-sm font-bold text-white outline-none transition-colors focus:border-[#d12429]/50 focus:ring-1 focus:ring-[#d12429]/30"
+                        />
+                        <div className="absolute -bottom-4 left-0 right-0 text-center text-[10px] text-white/30">BIRB</div>
+                      </div>
+                    </div>
+                    
+                    {/* Quick presets + Add Funds */}
+                    <div className="mt-5 flex items-center justify-between">
+                      <div className="flex gap-1.5">
+                        {[25, 50, 75, 100].map((pct) => (
+                          <button
+                            key={pct}
+                            onClick={() => {
+                              const val = Math.max(0, Math.floor((balance * pct) / 100));
+                              setSpinAmount(val);
+                              setSpinInputValue(val.toString());
+                            }}
+                            className={cn(
+                              "rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all",
+                              spinAmount === Math.floor((balance * pct) / 100)
+                                ? "bg-[#d12429]/20 text-[#d12429]"
+                                : "bg-[#ecd9ba]/5 text-white/40 hover:bg-[#ecd9ba]/10 hover:text-white/60"
+                            )}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
+                      </div>
                       <button
-                        key={pct}
-                        onClick={() => {
-                          const val = Math.max(0, Math.floor((balance * pct) / 100));
-                          setSpinAmount(val);
-                          setSpinInputValue(val.toString());
-                        }}
-                        className={cn(
-                          "rounded-lg px-2.5 py-1 text-[10px] font-medium transition-all",
-                          spinAmount === Math.floor((balance * pct) / 100)
-                            ? "bg-[#d12429]/20 text-[#d12429]"
-                            : "bg-[#ecd9ba]/5 text-white/40 hover:bg-[#ecd9ba]/10 hover:text-white/60"
-                        )}
+                        onClick={() => setShowAddFundsModal(true)}
+                        className="flex items-center gap-1 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 px-2 py-1 text-xs text-[#22c55e] transition-colors hover:bg-[#22c55e]/20"
                       >
-                        {pct}%
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Funds
                       </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setShowAddFundsModal(true)}
-                    className="flex items-center gap-1 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 px-2 py-1 text-xs text-[#22c55e] transition-colors hover:bg-[#22c55e]/20"
-                  >
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Funds
-                  </button>
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Character picks */}
